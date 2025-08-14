@@ -132,8 +132,8 @@ my-nestjs-app/
 
 ```bash
 # Clone the repository
-git clone https://github.com/filipkostecki/carrotly-cli.git
-cd carrotly-cli
+git clone https://github.com/carrotly-technologies/carrotly-nest-cli.git
+cd carrotly-nest-cli
 
 # Install dependencies
 yarn install
