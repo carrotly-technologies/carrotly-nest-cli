@@ -1,0 +1,40 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { EnvironmentVariables } from './env.variables';
+
+@Injectable()
+export class ElasticsearchConfig {
+  constructor(private readonly config: ConfigService<EnvironmentVariables>) {}
+
+  getConnectionConfig(): any {
+    return {
+      node: this.config.get('ELASTICSEARCH_URL'),
+      auth: {
+        username: this.config.get('ELASTICSEARCH_USERNAME'),
+        password: this.config.get('ELASTICSEARCH_PASSWORD'),
+      },
+      requestTimeout: 30000,
+      pingTimeout: 3000,
+      sniffOnStart: false,
+      sniffOnConnectionFault: false,
+      maxRetries: 3,
+      resurrectStrategy: 'ping',
+    };
+  }
+
+  getNode(): string {
+    return this.config.get('ELASTICSEARCH_URL') || 'http://localhost:9200';
+  }
+
+  getUsername(): string {
+    return this.config.get('ELASTICSEARCH_USERNAME') || 'elastic';
+  }
+
+  getPassword(): string {
+    return this.config.get('ELASTICSEARCH_PASSWORD') || '';
+  }
+
+  isEnabled(): boolean {
+    return this.config.get('ELASTICSEARCH_ENABLED') === 'true';
+  }
+}

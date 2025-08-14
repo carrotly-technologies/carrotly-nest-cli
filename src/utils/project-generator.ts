@@ -107,6 +107,21 @@ ${context.services.length > 0 ? `- **Services**: ${context.services.join(', ')}`
 
 ## Getting Started
 
+### Using Docker (Recommended)
+
+\`\`\`bash
+# Start all services with Docker Compose
+docker-compose up -d
+
+# View logs
+docker-compose logs -f app
+
+# Stop services
+docker-compose down
+\`\`\`
+
+### Manual Setup
+
 \`\`\`bash
 # Install dependencies
 npm install
@@ -195,6 +210,12 @@ This project was generated using [Carrotly CLI](https://github.com/your-username
 
     console.log(chalk.cyan('\n🚀 Next steps:'));
     console.log(chalk.white(`   cd ${config.directory}`));
+    console.log(chalk.cyan('\n🐳 Using Docker (Recommended):'));
+    console.log(chalk.white(`   docker-compose up -d`));
+    console.log(
+      chalk.gray('   (This will start all services including database)'),
+    );
+    console.log(chalk.cyan('\n📦 Manual setup:'));
     console.log(chalk.white(`   npm install`));
 
     if (config.orm === 'prisma') {

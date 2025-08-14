@@ -3,7 +3,7 @@ import * as path from 'path';
 import Handlebars from 'handlebars';
 import { TemplateContext } from '../types/project-config.types';
 
-export interface TemplateFile {
+interface TemplateFile {
   /** Template file path relative to templates directory */
   templatePath: string;
   /** Output file path relative to project root */
@@ -12,7 +12,7 @@ export interface TemplateFile {
   condition?: (context: TemplateContext) => boolean;
 }
 
-export interface TemplateSet {
+interface TemplateSet {
   name: string;
   description: string;
   files: TemplateFile[];
@@ -98,14 +98,13 @@ export class TemplateEngine {
 
     // Base NestJS templates - always included
     sets.push(this.getBaseTemplateSet());
+    sets.push(this.getDockerTemplateSet());
     sets.push(this.getConfigTemplateSet());
     sets.push(this.getCommonTemplateSet());
     sets.push(this.getExampleModuleTemplateSet());
 
     // API-specific templates
-    if (context.isGraphQL) {
-      sets.push(this.getGraphQLTemplateSet());
-    } else if (context.isRest) {
+    if (context.isRest) {
       sets.push(this.getRestTemplateSet());
     }
 
@@ -116,14 +115,27 @@ export class TemplateEngine {
       sets.push(this.getPrismaTemplateSet());
     }
 
-    // Service-specific templates
-    if (context.hasRedis) {
-      sets.push(this.getRedisTemplateSet());
+    // Module-specific templates
+    if (context.isGraphQL && context.isMongoose) {
+      sets.push(this.getModulesTemplateSet());
     }
 
-    // IDE-specific templates
+    // External service templates
+    if (context.hasRedis || context.hasElasticsearch || context.hasRabbitmq) {
+      sets.push(this.getExternalServicesTemplateSet());
+    }
+
+    // AI Assistant-specific templates
     if (context.codeAssistant === 'cursor') {
       sets.push(this.getCursorTemplateSet());
+    } else if (context.codeAssistant === 'windsurf') {
+      sets.push(this.getWindsurfTemplateSet());
+    } else if (context.codeAssistant === 'copilot') {
+      sets.push(this.getGitHubCopilotTemplateSet());
+    } else if (context.codeAssistant === 'claude') {
+      sets.push(this.getClaudeTemplateSet());
+    } else if (context.codeAssistant === 'warp') {
+      sets.push(this.getWarpTemplateSet());
     }
 
     return sets;
@@ -138,56 +150,73 @@ export class TemplateEngine {
       description: 'Core NestJS application files',
       files: [
         {
-          templatePath: 'base/package.json.hbs',
+          templatePath: 'core/package.json.hbs',
           outputPath: 'package.json',
         },
         {
-          templatePath: 'base/main.ts.hbs',
+          templatePath: 'core/yarn.lock.hbs',
+          outputPath: 'yarn.lock',
+        },
+        {
+          templatePath: 'core/main.ts.hbs',
           outputPath: 'src/main.ts',
         },
         {
-          templatePath: 'base/app.module.ts.hbs',
+          templatePath: 'core/app.module.ts.hbs',
           outputPath: 'src/app.module.ts',
         },
         {
-          templatePath: 'base/tsconfig.json.hbs',
+          templatePath: 'core/tsconfig.json.hbs',
           outputPath: 'tsconfig.json',
         },
         {
-          templatePath: 'base/tsconfig.build.json.hbs',
+          templatePath: 'core/tsconfig.build.json.hbs',
           outputPath: 'tsconfig.build.json',
         },
         {
-          templatePath: 'base/nest-cli.json.hbs',
+          templatePath: 'core/nest-cli.json.hbs',
           outputPath: 'nest-cli.json',
         },
         {
-          templatePath: 'base/.env.example.hbs',
+          templatePath: 'config/.env.example.hbs',
           outputPath: '.env.example',
         },
         {
-          templatePath: 'base/.gitignore.hbs',
+          templatePath: 'config/.gitignore.hbs',
           outputPath: '.gitignore',
+        },
+        {
+          templatePath: 'config/eslint.config.cjs.hbs',
+          outputPath: 'eslint.config.cjs',
+        },
+        {
+          templatePath: 'utils/registerEnums.ts.hbs',
+          outputPath: 'src/utils/registerEnums.ts',
+          condition: (context) => context.isGraphQL,
         },
       ],
     };
   }
 
   /**
-   * GraphQL template set
+   * Docker configuration template set
    */
-  private getGraphQLTemplateSet(): TemplateSet {
+  private getDockerTemplateSet(): TemplateSet {
     return {
-      name: 'graphql',
-      description: 'GraphQL with Yoga driver',
+      name: 'docker',
+      description: 'Docker configuration files',
       files: [
         {
-          templatePath: 'graphql/app.resolver.ts.hbs',
-          outputPath: 'src/app.resolver.ts',
+          templatePath: 'docker/Dockerfile.hbs',
+          outputPath: 'Dockerfile',
         },
         {
-          templatePath: 'graphql/graphql.module.ts.hbs',
-          outputPath: 'src/graphql/graphql.module.ts',
+          templatePath: 'docker/.dockerignore.hbs',
+          outputPath: '.dockerignore',
+        },
+        {
+          templatePath: 'docker/docker-compose.yml.hbs',
+          outputPath: 'docker-compose.yml',
         },
       ],
     };
@@ -202,15 +231,15 @@ export class TemplateEngine {
       description: 'REST API with Swagger',
       files: [
         {
-          templatePath: 'rest/app.controller.ts.hbs',
+          templatePath: 'api/rest/app.controller.ts.hbs',
           outputPath: 'src/app.controller.ts',
         },
         {
-          templatePath: 'rest/app.service.ts.hbs',
+          templatePath: 'api/rest/app.service.ts.hbs',
           outputPath: 'src/app.service.ts',
         },
         {
-          templatePath: 'rest/dto/app.dto.ts.hbs',
+          templatePath: 'api/rest/dto/app.dto.ts.hbs',
           outputPath: 'src/dto/app.dto.ts',
         },
       ],
@@ -218,21 +247,14 @@ export class TemplateEngine {
   }
 
   /**
-   * Mongoose template set
+   * Mongoose template set (no longer needed - all files moved to other template sets)
    */
   private getMongooseTemplateSet(): TemplateSet {
     return {
       name: 'mongoose',
       description: 'Mongoose ODM for MongoDB',
       files: [
-        {
-          templatePath: 'mongoose/database.module.ts.hbs',
-          outputPath: 'src/database/database.module.ts',
-        },
-        {
-          templatePath: 'mongoose/schemas/example.schema.ts.hbs',
-          outputPath: 'src/schemas/example.schema.ts',
-        },
+        // All Mongoose-specific files are now in the common modules and example module template sets
       ],
     };
   }
@@ -246,36 +268,86 @@ export class TemplateEngine {
       description: 'Prisma ORM for PostgreSQL/MySQL',
       files: [
         {
-          templatePath: 'prisma/prisma.service.ts.hbs',
-          outputPath: 'src/prisma/prisma.service.ts',
+          templatePath: 'database/prisma/schema.prisma.hbs',
+          outputPath: 'prisma/schema.prisma',
         },
         {
-          templatePath: 'prisma/prisma.module.ts.hbs',
+          templatePath: 'database/prisma/prisma.module.ts.hbs',
           outputPath: 'src/prisma/prisma.module.ts',
         },
         {
-          templatePath: 'prisma/schema.prisma.hbs',
-          outputPath: 'prisma/schema.prisma',
+          templatePath: 'database/prisma/prisma.service.ts.hbs',
+          outputPath: 'src/prisma/prisma.service.ts',
         },
       ],
     };
   }
 
   /**
-   * Redis template set
+   * Modules template set (GraphQL + Mongoose utilities)
    */
-  private getRedisTemplateSet(): TemplateSet {
+  private getModulesTemplateSet(): TemplateSet {
     return {
-      name: 'redis',
-      description: 'Redis configuration and service',
+      name: 'modules',
+      description: 'Utility modules for GraphQL and Mongoose',
       files: [
         {
-          templatePath: 'services/redis.module.ts.hbs',
-          outputPath: 'src/redis/redis.module.ts',
+          templatePath: 'modules/pagination/pagination.module.ts.hbs',
+          outputPath: 'src/pagination/pagination.module.ts',
         },
         {
-          templatePath: 'services/redis.service.ts.hbs',
-          outputPath: 'src/redis/redis.service.ts',
+          templatePath: 'modules/pagination/pagination.service.ts.hbs',
+          outputPath: 'src/pagination/pagination.service.ts',
+        },
+      ],
+    };
+  }
+
+  /**
+   * External services template set (Redis, Elasticsearch, RabbitMQ)
+   */
+  private getExternalServicesTemplateSet(): TemplateSet {
+    return {
+      name: 'external-services',
+      description:
+        'External service integrations (Redis, Elasticsearch, RabbitMQ)',
+      files: [
+        // Redis templates
+        {
+          templatePath: 'external-services/redis/redis.module.ts.hbs',
+          outputPath: 'src/external-services/redis/redis.module.ts',
+          condition: (context) => context.hasRedis,
+        },
+        {
+          templatePath: 'external-services/redis/redis.service.ts.hbs',
+          outputPath: 'src/external-services/redis/redis.service.ts',
+          condition: (context) => context.hasRedis,
+        },
+        // Elasticsearch templates
+        {
+          templatePath:
+            'external-services/elasticsearch/elasticsearch.module.ts.hbs',
+          outputPath:
+            'src/external-services/elasticsearch/elasticsearch.module.ts',
+          condition: (context) => context.hasElasticsearch,
+        },
+        {
+          templatePath:
+            'external-services/elasticsearch/elasticsearch.service.ts.hbs',
+          outputPath:
+            'src/external-services/elasticsearch/elasticsearch.service.ts',
+          condition: (context) => context.hasElasticsearch,
+        },
+        // RabbitMQ templates
+        {
+          templatePath: 'external-services/rabbitmq/rabbitmq.module.ts.hbs',
+          outputPath: 'src/external-services/rabbitmq/rabbitmq.module.ts',
+          condition: (context) => context.hasRabbitmq,
+        },
+        {
+          templatePath: 'external-services/rabbitmq/rabbitmq.service.ts.hbs',
+          outputPath: 'src/external-services/rabbitmq/rabbitmq.service.ts',
+          condition: (context) => context.hasRabbitmq,
         },
       ],
     };
@@ -290,21 +362,36 @@ export class TemplateEngine {
       description: 'Configuration modules with validation',
       files: [
         {
-          templatePath: 'base/config/env.variables.ts.hbs',
-          outputPath: 'src/config/env.variables.ts',
-        },
-        {
-          templatePath: 'base/config/server.config.ts.hbs',
-          outputPath: 'src/config/server.config.ts',
-        },
-        {
-          templatePath: 'base/config/config.module.ts.hbs',
+          templatePath: 'config/config.module.ts.hbs',
           outputPath: 'src/config/config.module.ts',
         },
         {
-          templatePath: 'mongoose/database.config.ts.hbs',
-          outputPath: 'src/database/database.config.ts',
+          templatePath: 'config/server.config.ts.hbs',
+          outputPath: 'src/config/server.config.ts',
+        },
+        {
+          templatePath: 'config/env.variables.ts.hbs',
+          outputPath: 'src/config/env.variables.ts',
+        },
+        {
+          templatePath: 'config/database.config.ts.hbs',
+          outputPath: 'src/config/database.config.ts',
           condition: (context) => context.isMongoose,
+        },
+        {
+          templatePath: 'config/redis.config.ts.hbs',
+          outputPath: 'src/config/redis.config.ts',
+          condition: (context) => context.hasRedis,
+        },
+        {
+          templatePath: 'config/elasticsearch.config.ts.hbs',
+          outputPath: 'src/config/elasticsearch.config.ts',
+          condition: (context) => context.hasElasticsearch,
+        },
+        {
+          templatePath: 'config/rabbitmq.config.ts.hbs',
+          outputPath: 'src/config/rabbitmq.config.ts',
+          condition: (context) => context.hasRabbitmq,
         },
       ],
     };
@@ -318,20 +405,66 @@ export class TemplateEngine {
       name: 'common',
       description: 'Common modules and utilities',
       files: [
+        // Common modules
         {
-          templatePath: 'base/common/modules/app-db.module.ts.hbs',
+          templatePath: 'core/modules/app-db.module.ts.hbs',
           outputPath: 'src/common/modules/app-db.module.ts',
         },
         {
-          templatePath: 'base/common/modules/app-gql.module.ts.hbs',
+          templatePath: 'core/modules/app-gql.module.ts.hbs',
           outputPath: 'src/common/modules/app-gql.module.ts',
           condition: (context) => context.isGraphQL,
         },
         {
           templatePath:
-            'mongoose/common/modules/app-mongoose-models.module.ts.hbs',
+            'database/mongoose/common/modules/app-mongoose-models.module.ts.hbs',
           outputPath: 'src/common/modules/app-mongoose-models.module.ts',
           condition: (context) => context.isMongoose,
+        },
+        // Common utilities
+        {
+          templatePath: 'common/common.constraints.ts.hbs',
+          outputPath: 'src/common/common.constraints.ts',
+        },
+        {
+          templatePath: 'core/errors/business.error.ts.hbs',
+          outputPath: 'src/common/errors/business.error.ts',
+        },
+        {
+          templatePath: 'common/errors/graphql-common-errors.ts.hbs',
+          outputPath: 'src/common/errors/graphql-common-errors.ts',
+          condition: (context) => context.isGraphQL,
+        },
+        {
+          templatePath: 'common/errors/unauthenticated.error.ts.hbs',
+          outputPath: 'src/common/errors/unauthenticated.error.ts',
+          condition: (context) => context.isGraphQL,
+        },
+        {
+          templatePath: 'core/responses/success.response.ts.hbs',
+          outputPath: 'src/common/responses/success.response.ts',
+        },
+        // Common enums
+        {
+          templatePath: 'core/enum/sort.enum.ts.hbs',
+          outputPath: 'src/common/enum/sort.enum.ts',
+          condition: (context) => context.isGraphQL,
+        },
+        // GraphQL common inputs and responses
+        {
+          templatePath: 'core/inputs/pagination.input.ts.hbs',
+          outputPath: 'src/common/inputs/pagination.input.ts',
+          condition: (context) => context.isGraphQL,
+        },
+        {
+          templatePath: 'core/inputs/sort.input.ts.hbs',
+          outputPath: 'src/common/inputs/sort.input.ts',
+          condition: (context) => context.isGraphQL,
+        },
+        {
+          templatePath: 'core/responses/pagination.response.ts.hbs',
+          outputPath: 'src/common/responses/pagination.response.ts',
+          condition: (context) => context.isGraphQL,
         },
       ],
     };
@@ -344,11 +477,11 @@ export class TemplateEngine {
     const files: TemplateFile[] = [
       // Base files (always included)
       {
-        templatePath: 'base/example-module/example.module.ts.hbs',
+        templatePath: 'examples/base-example/example.module.ts.hbs',
         outputPath: 'src/example-module/example.module.ts',
       },
       {
-        templatePath: 'base/example-module/services/example.service.ts.hbs',
+        templatePath: 'examples/base-example/services/example.service.ts.hbs',
         outputPath: 'src/example-module/services/example.service.ts',
       },
     ];
@@ -356,13 +489,13 @@ export class TemplateEngine {
     // Mongoose-specific files
     files.push(
       {
-        templatePath: 'base/example-module/schemas/example.schema.ts.hbs',
+        templatePath: 'examples/base-example/schemas/example.schema.ts.hbs',
         outputPath: 'src/example-module/schemas/example.schema.ts',
         condition: (context) => context.isMongoose,
       },
       {
         templatePath:
-          'base/example-module/repositories/example.repository.ts.hbs',
+          'examples/base-example/repositories/example.repository.ts.hbs',
         outputPath: 'src/example-module/repositories/example.repository.ts',
         condition: (context) => context.isMongoose,
       },
@@ -370,32 +503,67 @@ export class TemplateEngine {
 
     // GraphQL-specific files
     files.push(
+      // GraphQL objects and responses
       {
-        templatePath: 'graphql/example-module/objects/example.object.ts.hbs',
+        templatePath: 'examples/graphql-example/objects/example.object.ts.hbs',
         outputPath: 'src/example-module/objects/example.object.ts',
         condition: (context) => context.isGraphQL,
       },
+      // Pagination response
       {
         templatePath:
-          'graphql/example-module/inputs/example-create.input.ts.hbs',
+          'examples/graphql-example/responses/example-pagination.response.ts.hbs',
+        outputPath:
+          'src/example-module/responses/example-pagination.response.ts',
+        condition: (context) => context.isGraphQL,
+      },
+      // GraphQL inputs (only existing ones)
+      {
+        templatePath:
+          'examples/graphql-example/inputs/example-create.input.ts.hbs',
         outputPath: 'src/example-module/inputs/example-create.input.ts',
         condition: (context) => context.isGraphQL,
       },
       {
         templatePath:
-          'graphql/example-module/inputs/example-update.input.ts.hbs',
+          'examples/graphql-example/inputs/example-update.input.ts.hbs',
         outputPath: 'src/example-module/inputs/example-update.input.ts',
         condition: (context) => context.isGraphQL,
       },
       {
+        templatePath: 'examples/graphql-example/inputs/example.input.ts.hbs',
+        outputPath: 'src/example-module/inputs/example.input.ts',
+        condition: (context) => context.isGraphQL,
+      },
+      {
         templatePath:
-          'graphql/example-module/inputs/example-find-many.input.ts.hbs',
+          'examples/graphql-example/inputs/example-find-many.input.ts.hbs',
         outputPath: 'src/example-module/inputs/example-find-many.input.ts',
         condition: (context) => context.isGraphQL,
       },
       {
         templatePath:
-          'graphql/example-module/resolvers/example.resolver.ts.hbs',
+          'examples/graphql-example/inputs/example-find-many-sort.input.ts.hbs',
+        outputPath: 'src/example-module/inputs/example-find-many-sort.input.ts',
+        condition: (context) => context.isGraphQL,
+      },
+      // GraphQL errors
+      {
+        templatePath:
+          'examples/graphql-example/errors/graphql-example-errors.ts.hbs',
+        outputPath: 'src/example-module/errors/graphql-example-errors.ts',
+        condition: (context) => context.isGraphQL,
+      },
+      {
+        templatePath:
+          'examples/graphql-example/errors/example-not-found.error.ts.hbs',
+        outputPath: 'src/example-module/errors/example-not-found.error.ts',
+        condition: (context) => context.isGraphQL,
+      },
+      // GraphQL resolver
+      {
+        templatePath:
+          'examples/graphql-example/resolvers/example.resolver.ts.hbs',
         outputPath: 'src/example-module/resolvers/example.resolver.ts',
         condition: (context) => context.isGraphQL,
       },
@@ -405,12 +573,12 @@ export class TemplateEngine {
     files.push(
       {
         templatePath:
-          'rest/example-module/controllers/example.controller.ts.hbs',
+          'examples/rest-example/controllers/example.controller.ts.hbs',
         outputPath: 'src/example-module/controllers/example.controller.ts',
         condition: (context) => context.isRest,
       },
       {
-        templatePath: 'rest/example-module/dto/example.dto.ts.hbs',
+        templatePath: 'examples/rest-example/dto/example.dto.ts.hbs',
         outputPath: 'src/example-module/dto/example.dto.ts',
         condition: (context) => context.isRest,
       },
@@ -424,16 +592,133 @@ export class TemplateEngine {
   }
 
   /**
-   * Cursor IDE template set
+   * Cursor AI assistant template set
    */
   private getCursorTemplateSet(): TemplateSet {
     return {
       name: 'cursor',
-      description: 'Cursor IDE configuration',
+      description:
+        'Cursor AI assistant configuration with individual rule files',
       files: [
         {
-          templatePath: 'cursor/.cursor/rules',
-          outputPath: '.cursor/rules',
+          templatePath: 'assistants/cursor/rules/module-structure.mdc.hbs',
+          outputPath: '.cursor/rules/module-structure.mdc',
+        },
+        {
+          templatePath: 'assistants/cursor/rules/resolver-conventions.mdc.hbs',
+          outputPath: '.cursor/rules/resolver-conventions.mdc',
+          condition: (context) => context.isGraphQL,
+        },
+        {
+          templatePath: 'assistants/cursor/rules/input-guidelines.mdc.hbs',
+          outputPath: '.cursor/rules/input-guidelines.mdc',
+          condition: (context) => context.isGraphQL,
+        },
+        {
+          templatePath: 'assistants/cursor/rules/object-guidelines.mdc.hbs',
+          outputPath: '.cursor/rules/object-guidelines.mdc',
+          condition: (context) => context.isGraphQL,
+        },
+        {
+          templatePath: 'assistants/cursor/rules/controller-guidelines.mdc.hbs',
+          outputPath: '.cursor/rules/controller-guidelines.mdc',
+          condition: (context) => context.isRest,
+        },
+        {
+          templatePath: 'assistants/cursor/rules/dto-guidelines.mdc.hbs',
+          outputPath: '.cursor/rules/dto-guidelines.mdc',
+          condition: (context) => context.isRest,
+        },
+        {
+          templatePath: 'assistants/cursor/rules/repository-guidelines.mdc.hbs',
+          outputPath: '.cursor/rules/repository-guidelines.mdc',
+          condition: (context) => context.isMongoose,
+        },
+        {
+          templatePath: 'assistants/cursor/rules/schema-guidelines.mdc.hbs',
+          outputPath: '.cursor/rules/schema-guidelines.mdc',
+          condition: (context) => context.isMongoose,
+        },
+        {
+          templatePath: 'assistants/cursor/rules/prisma-guidelines.mdc.hbs',
+          outputPath: '.cursor/rules/prisma-guidelines.mdc',
+          condition: (context) => context.isPrisma,
+        },
+        {
+          templatePath: 'assistants/cursor/rules/error-guidelines.mdc.hbs',
+          outputPath: '.cursor/rules/error-guidelines.mdc',
+        },
+        {
+          templatePath: 'assistants/cursor/rules/service-guidelines.mdc.hbs',
+          outputPath: '.cursor/rules/service-guidelines.mdc',
+        },
+        {
+          templatePath: 'assistants/cursor/rules/file-naming.mdc.hbs',
+          outputPath: '.cursor/rules/file-naming.mdc',
+        },
+      ],
+    };
+  }
+
+  /**
+   * Windsurf AI assistant template set
+   */
+  private getWindsurfTemplateSet(): TemplateSet {
+    return {
+      name: 'windsurf',
+      description: 'Windsurf (Codeium) AI assistant configuration',
+      files: [
+        {
+          templatePath: 'assistants/windsurf/rules.md.hbs',
+          outputPath: '.windsurf/rules.md',
+        },
+      ],
+    };
+  }
+
+  /**
+   * GitHub Copilot template set
+   */
+  private getGitHubCopilotTemplateSet(): TemplateSet {
+    return {
+      name: 'github-copilot',
+      description: 'GitHub Copilot AI assistant configuration',
+      files: [
+        {
+          templatePath: 'assistants/github-copilot/copilot-instructions.md.hbs',
+          outputPath: '.github/copilot-instructions.md',
+        },
+      ],
+    };
+  }
+
+  /**
+   * Claude AI assistant template set
+   */
+  private getClaudeTemplateSet(): TemplateSet {
+    return {
+      name: 'claude',
+      description: 'Claude (Anthropic) AI assistant configuration',
+      files: [
+        {
+          templatePath: 'assistants/claude/project_knowledge.md.hbs',
+          outputPath: '.claude/project_knowledge.md',
+        },
+      ],
+    };
+  }
+
+  /**
+   * Warp AI assistant template set
+   */
+  private getWarpTemplateSet(): TemplateSet {
+    return {
+      name: 'warp',
+      description: 'Warp AI assistant configuration',
+      files: [
+        {
+          templatePath: 'assistants/warp/project-context.md.hbs',
+          outputPath: '.warp/project-context.md',
         },
       ],
     };
@@ -443,6 +728,20 @@ export class TemplateEngine {
    * Register custom Handlebars helpers
    */
   static registerHelpers(): void {
+    // Helper for equality check (used in conditions)
+    Handlebars.registerHelper('eq', function (a, b, options) {
+      // When used in {{#if (eq ...)}} context, options is undefined
+      // When used in {{#if}} block context, options contains fn/inverse
+      if (typeof options === 'undefined') {
+        return a === b;
+      }
+
+      if (a === b) {
+        return options.fn ? options.fn(this) : true;
+      }
+      return options.inverse ? options.inverse(this) : false;
+    });
+
     // Helper for conditional inclusion
     Handlebars.registerHelper('if_eq', function (a, b, options) {
       if (a === b) {
@@ -453,6 +752,11 @@ export class TemplateEngine {
 
     // Helper for array inclusion check
     Handlebars.registerHelper('includes', function (array, value, options) {
+      // Handle case where options might not be provided (when used in conditions)
+      if (typeof options === 'undefined') {
+        return Array.isArray(array) && array.includes(value);
+      }
+
       if (Array.isArray(array) && array.includes(value)) {
         return options.fn(this);
       }

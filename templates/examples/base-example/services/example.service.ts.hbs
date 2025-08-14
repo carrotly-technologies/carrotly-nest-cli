@@ -1,0 +1,126 @@
+import { Injectable } from '@nestjs/common';
+{{#if isGraphQL}}
+import { PaginationInput } from '@common/inputs/pagination.input';
+import { PaginationMetadata } from '@common/responses/pagination.response';
+import { ExampleCreateInput } from '../inputs/example-create.input';
+import { ExampleFindManySortInput } from '../inputs/example-find-many-sort.input';
+import { ExampleFindManyInput } from '../inputs/example-find-many.input';
+import { ExampleUpdateInput } from '../inputs/example-update.input';
+import { ExamplePaginationResponse } from '../responses/example-pagination.response';
+import { ExampleNotFoundError } from '../errors/example-not-found.error';
+{{/if}}
+{{#if isMongoose}}
+import { ExampleRepository } from '../repositories/example.repository';
+import { ExampleDocument } from '../schemas/example.schema';
+{{/if}}
+{{#if isPrisma}}
+import { PrismaService } from '@app/prisma/prisma.service';
+import { Example } from '@prisma/client';
+{{/if}}
+
+@Injectable()
+export class ExampleService {
+{{#if isMongoose}}
+  constructor(private readonly exampleRepository: ExampleRepository) {}
+
+  async create(input: ExampleCreateInput): Promise<ExampleDocument> {
+    return this.exampleRepository.create(input);
+  }
+
+  async findMany(input?: ExampleFindManyInput): Promise<ExampleDocument[]> {
+    return this.exampleRepository.findMany(input);
+  }
+
+  async findById(id: string): Promise<ExampleDocument> {
+    const example = await this.exampleRepository.findById(id);
+    if (!example) {
+      throw new ExampleNotFoundError();
+    }
+    return example;
+  }
+
+  async updateById(id: string, input: ExampleUpdateInput): Promise<ExampleDocument> {
+    const example = await this.exampleRepository.updateById(id, input);
+    if (!example) {
+      throw new ExampleNotFoundError();
+    }
+    return example;
+  }
+
+  async deleteById(id: string): Promise<void> {
+    const result = await this.exampleRepository.deleteById(id);
+    if (!result) {
+      throw new ExampleNotFoundError();
+    }
+  }
+
+  async countMany(input?: ExampleFindManyInput): Promise<number> {
+    return this.exampleRepository.countMany(input);
+  }
+
+{{#if isGraphQL}}
+  async findAll(
+    input: ExampleFindManyInput,
+    sort: ExampleFindManySortInput,
+    pagination: PaginationInput,
+  ): Promise<ExamplePaginationResponse> {
+    const [items, totalCount] = await Promise.all([
+      this.exampleRepository.findManyWithPagination(input, sort, pagination),
+      this.exampleRepository.countMany(input),
+    ]);
+
+    const metadata = new PaginationMetadata(totalCount, pagination.page, pagination.pageSize);
+    
+    return {
+      items,
+      metadata,
+    };
+  }
+{{/if}}
+{{/if}}
+{{#if isPrisma}}
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(data: { name: string; description?: string }): Promise<Example> {
+    return this.prisma.example.create({
+      data,
+    });
+  }
+
+  async findMany(where?: { name?: string; isActive?: boolean }): Promise<Example[]> {
+    return this.prisma.example.findMany({
+      where,
+    });
+  }
+
+  async findById(id: string): Promise<Example | null> {
+    return this.prisma.example.findUnique({
+      where: { id },
+    });
+  }
+
+  async updateById(id: string, data: { name?: string; description?: string; isActive?: boolean }): Promise<Example | null> {
+    return this.prisma.example.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async deleteById(id: string): Promise<boolean> {
+    try {
+      await this.prisma.example.delete({
+        where: { id },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async countMany(where?: { name?: string; isActive?: boolean }): Promise<number> {
+    return this.prisma.example.count({
+      where,
+    });
+  }
+{{/if}}
+}

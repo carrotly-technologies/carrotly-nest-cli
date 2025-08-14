@@ -1,0 +1,45 @@
+import { PaginationInput } from '@common/inputs/pagination.input';
+import { Injectable } from '@nestjs/common';
+import { PipelineStage, Model } from 'mongoose';
+
+@Injectable()
+export class PaginationService {
+  async paginate<T>(
+    aggregation: PipelineStage[],
+    pagination: PaginationInput,
+    model: Model<T>,
+  ) {
+    const { pageSize, page, skipValue } = pagination;
+    const pipelinePagination = [
+      {
+        $skip: skipValue,
+      },
+      {
+        $limit: pageSize,
+      },
+    ];
+
+    const data = await model.aggregate<T>([
+      ...aggregation,
+      ...pipelinePagination,
+    ]);
+    const dataCount = await model.aggregate<{ count: number }>([
+      ...aggregation,
+      {
+        $count: 'count',
+      },
+    ]);
+    const totalPages = dataCount[0]?.count
+      ? Math.ceil(dataCount[0].count / pageSize)
+      : 0;
+    return {
+      data,
+      metadata: {
+        currentPage: page,
+        pageSize,
+        totalCount: dataCount[0]?.count || 0,
+        totalPages,
+      },
+    };
+  }
+}

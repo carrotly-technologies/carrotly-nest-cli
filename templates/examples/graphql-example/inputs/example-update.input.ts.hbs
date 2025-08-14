@@ -1,0 +1,33 @@
+import { Field, InputType } from '@nestjs/graphql';
+import { IsString, IsOptional, MaxLength, IsBoolean } from 'class-validator';
+{{#if isMongoose}}
+import { GraphQLObjectID } from 'graphql-scalars';
+{{/if}}
+
+@InputType()
+export class ExampleUpdateInput {
+{{#if isMongoose}}
+  @Field(() => GraphQLObjectID)
+  id: string;
+{{/if}}
+{{#if isPrisma}}
+  @Field(() => String)
+  id: string;
+{{/if}}
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  name?: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+
+  @Field(() => Boolean, { nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}

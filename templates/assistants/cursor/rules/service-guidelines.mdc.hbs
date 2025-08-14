@@ -1,0 +1,14 @@
+---
+description: Service Layer Implementation Guidelines
+globs: "**/*.service.ts"
+alwaysApply: true
+---
+- Services handle business logic only, not database operations
+{{#if isMongoose}}- Call repository methods for data access, never directly access the database{{/if}}
+{{#if isPrisma}}- Use PrismaService for data access, inject it properly{{/if}}
+- Services should be stateless and focused on specific business operations
+- Handle domain-specific errors with appropriate business exceptions
+- Validate input parameters and throw appropriate errors
+{{#if isGraphQL}}- Return data in format expected by GraphQL resolvers{{/if}}
+{{#if isRest}}- Return data in format expected by REST controllers{{/if}}
+@service-template.ts

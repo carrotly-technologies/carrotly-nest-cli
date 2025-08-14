@@ -49,8 +49,8 @@ export class ProjectWizard {
           const validation = validateNpmPackageName(input);
           if (!validation.validForNewPackages) {
             const errors = [
-              ...(validation.errors || []),
-              ...(validation.warnings || []),
+              ...(validation.errors ?? []),
+              ...(validation.warnings ?? []),
             ];
             return `Invalid project name: ${errors.join(', ')}`;
           }
@@ -107,7 +107,7 @@ export class ProjectWizard {
           { name: 'MySQL', value: 'mysql' },
         ],
         when: (answers) => {
-          const orm = options.orm || answers.orm;
+          const orm = options.orm ?? answers.orm;
           return orm === 'prisma';
         },
       });
@@ -120,7 +120,7 @@ export class ProjectWizard {
         name: 'services',
         message: 'Select additional services:',
         choices: [
-          { name: 'Redis (Caching & Sessions)', value: 'redis', checked: true },
+          { name: 'Redis (Caching & Sessions)', value: 'redis' },
           { name: 'Elasticsearch (Search)', value: 'elasticsearch' },
           { name: 'RabbitMQ (Message Queue)', value: 'rabbitmq' },
         ],
@@ -134,11 +134,14 @@ export class ProjectWizard {
         name: 'codeAssistant',
         message: 'Which code assistant rules would you like to include?',
         choices: [
-          { name: 'Cursor AI', value: 'cursor' },
-          { name: 'GitHub Copilot', value: 'copilot' },
           { name: 'None', value: 'none' },
+          { name: 'Cursor AI', value: 'cursor' },
+          { name: 'Windsurf (Codeium)', value: 'windsurf' },
+          { name: 'GitHub Copilot', value: 'copilot' },
+          { name: 'Claude (Anthropic)', value: 'claude' },
+          { name: 'Warp AI', value: 'warp' },
         ],
-        default: 'cursor',
+        default: 'none',
       });
     }
 
@@ -149,7 +152,7 @@ export class ProjectWizard {
         name: 'directory',
         message: 'Target directory:',
         default: (answers: any) => {
-          const name = initialName || options.name || answers.name;
+          const name = initialName ?? options.name ?? answers.name;
           return `./${name}`;
         },
       });
@@ -159,18 +162,18 @@ export class ProjectWizard {
   }
 
   private buildConfig(answers: any, options: CommandOptions): ProjectConfig {
-    const name = options.name || answers.name;
+    const name = options.name ?? answers.name;
 
     return {
       name,
-      description: options.description || answers.description || '',
-      api: (options.api || answers.api) as ApiType,
-      orm: (options.orm || answers.orm) as OrmType,
-      database: (options.database || answers.database) as DatabaseType,
-      services: this.parseServices(options.services || answers.services),
-      codeAssistant: (options.codeAssistant ||
+      description: options.description ?? answers.description ?? '',
+      api: (options.api ?? answers.api) as ApiType,
+      orm: (options.orm ?? answers.orm) as OrmType,
+      database: (options.database ?? answers.database) as DatabaseType,
+      services: this.parseServices(options.services ?? answers.services),
+      codeAssistant: (options.codeAssistant ??
         answers.codeAssistant) as CodeAssistantType,
-      directory: options.directory || answers.directory || `./${name}`,
+      directory: options.directory ?? answers.directory ?? `./${name}`,
     };
   }
 
@@ -178,6 +181,6 @@ export class ProjectWizard {
     if (typeof services === 'string') {
       return services.split(',').map((s) => s.trim()) as ServiceType[];
     }
-    return services || [];
+    return services ?? [];
   }
 }

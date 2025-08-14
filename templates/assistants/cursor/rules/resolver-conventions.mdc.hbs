@@ -1,0 +1,16 @@
+{{#if isGraphQL}}---
+description: GraphQL Resolver Naming Conventions
+globs: "**/*.resolver.ts"
+alwaysApply: true
+---
+- Queries follow the pattern `<object><operation>`: e.g., `user` (single), `users` (multiple)
+- Mutations follow the pattern `<object><operation>`: e.g., `userCreate`, `userUpdate`, `userDelete`
+- Separate pagination, sorting, and filtering inputs for clarity:
+  ```ts
+  @Args(INPUT_KEY) input: UserFindManyInput,
+  @Args(INPUT_SORT) sort: UserFindManySortInput,
+  @Args(INPUT_PAGINATION) pagination: PaginationInput
+  ```
+- Use `PaginationInput` from common module for standardized pagination
+- Import constants from `src/common/common.constraints.ts`: INPUT_KEY, INPUT_PAGINATION, INPUT_SORT
+@resolver-template.ts{{/if}}

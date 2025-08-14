@@ -1,0 +1,29 @@
+import { Module } from '@nestjs/common';
+import { ElasticsearchService } from './elasticsearch.service';
+import { ElasticsearchConfig } from '../../config/elasticsearch.config';
+import { Client } from '@elastic/elasticsearch';
+
+@Module({
+  providers: [
+    {
+      provide: 'ELASTICSEARCH_CLIENT',
+      useFactory: async (elasticsearchConfig: ElasticsearchConfig) => {
+        const client = new Client(elasticsearchConfig.getConnectionConfig());
+
+        // Test connection
+        try {
+          await client.ping();
+          console.log('Elasticsearch Client connected');
+        } catch (error) {
+          console.error('Elasticsearch Client Error:', error);
+        }
+
+        return client;
+      },
+      inject: [ElasticsearchConfig],
+    },
+    ElasticsearchService,
+  ],
+  exports: [ElasticsearchService],
+})
+export class ElasticsearchModule {}

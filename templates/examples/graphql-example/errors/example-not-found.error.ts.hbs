@@ -1,0 +1,9 @@
+import { NotFoundError } from '@common/errors/business.error';
+
+export const EXAMPLE_NOT_FOUND_ERROR_CODE = 'EXAMPLE_NOT_FOUND';
+
+export class ExampleNotFoundError extends NotFoundError {
+  constructor(details?: unknown) {
+    super('Example not found', EXAMPLE_NOT_FOUND_ERROR_CODE, details);
+  }
+}

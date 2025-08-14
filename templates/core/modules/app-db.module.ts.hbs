@@ -1,0 +1,28 @@
+import { Module } from '@nestjs/common';
+import { AppConfigModule } from '../../config/config.module';
+{{#if isMongoose}}
+import { MongooseModule } from '@nestjs/mongoose';
+import { DatabaseConfig } from '../../config/database.config';
+{{/if}}
+{{#if isPrisma}}
+import { PrismaModule } from '../../prisma/prisma.module';
+{{/if}}
+
+@Module({
+  imports: [
+    AppConfigModule,
+{{#if isMongoose}}
+    MongooseModule.forRootAsync({
+      imports: [AppConfigModule],
+      useExisting: DatabaseConfig,
+    }),
+{{/if}}
+{{#if isPrisma}}
+    PrismaModule,
+{{/if}}
+  ],
+{{#if isPrisma}}
+  exports: [PrismaModule],
+{{/if}}
+})
+export class AppDbModule {}

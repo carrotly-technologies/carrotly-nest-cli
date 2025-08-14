@@ -1,0 +1,23 @@
+{{#if isPrisma}}---
+description: Prisma Implementation Guidelines
+globs: "**/*.ts"
+alwaysApply: true
+---
+- Use PrismaService for all database operations, inject it in services:
+  ```ts
+  constructor(private readonly prisma: PrismaService) {}
+  ```
+- Use Prisma client methods: findMany, findUnique, create, update, delete
+- Apply proper error handling for Prisma errors (P2002, P2025, etc.)
+- Use transactions for complex operations:
+  ```ts
+  await this.prisma.$transaction([
+    this.prisma.user.create(data),
+    this.prisma.profile.create(profileData)
+  ]);
+  ```
+- Define proper relationships in schema.prisma with foreign keys
+- Use Prisma generators and run `npm run prisma:generate` after schema changes
+- Apply proper types from Prisma client: User, Prisma.UserCreateInput, etc.
+- Use include/select for efficient data fetching
+@prisma-template.ts{{/if}}

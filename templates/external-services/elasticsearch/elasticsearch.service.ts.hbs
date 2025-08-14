@@ -1,0 +1,116 @@
+import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Client } from '@elastic/elasticsearch';
+
+@Injectable()
+export class ElasticsearchService {
+  private readonly logger = new Logger(ElasticsearchService.name);
+
+  constructor(
+    @Inject('ELASTICSEARCH_CLIENT')
+    private readonly elasticsearchClient: Client,
+  ) {}
+
+  async indexDocument(index: string, document: any, id?: string): Promise<any> {
+    try {
+      const body = id ? { index, id, body: document } : { index, body: document };
+      const result = await this.elasticsearchClient.index(body);
+      return result;
+    } catch (error) {
+      this.logger.error(`Error indexing document in ${index}:`, error);
+      throw error;
+    }
+  }
+
+  async getDocument(index: string, id: string): Promise<any> {
+    try {
+      const result = await this.elasticsearchClient.get({
+        index,
+        id,
+      });
+      return result;
+    } catch (error) {
+      this.logger.error(`Error getting document ${id} from ${index}:`, error);
+      throw error;
+    }
+  }
+
+  async searchDocuments(index: string, query: any): Promise<any> {
+    try {
+      const result = await this.elasticsearchClient.search({
+        index,
+        body: query,
+      });
+      return result;
+    } catch (error) {
+      this.logger.error(`Error searching in ${index}:`, error);
+      throw error;
+    }
+  }
+
+  async updateDocument(index: string, id: string, document: any): Promise<any> {
+    try {
+      const result = await this.elasticsearchClient.update({
+        index,
+        id,
+        body: {
+          doc: document,
+        },
+      });
+      return result;
+    } catch (error) {
+      this.logger.error(`Error updating document ${id} in ${index}:`, error);
+      throw error;
+    }
+  }
+
+  async deleteDocument(index: string, id: string): Promise<any> {
+    try {
+      const result = await this.elasticsearchClient.delete({
+        index,
+        id,
+      });
+      return result;
+    } catch (error) {
+      this.logger.error(`Error deleting document ${id} from ${index}:`, error);
+      throw error;
+    }
+  }
+
+  async createIndex(index: string, mapping?: any): Promise<any> {
+    try {
+      const body = mapping ? { mappings: mapping } : {};
+      const result = await this.elasticsearchClient.indices.create({
+        index,
+        body,
+      });
+      return result;
+    } catch (error) {
+      this.logger.error(`Error creating index ${index}:`, error);
+      throw error;
+    }
+  }
+
+  async deleteIndex(index: string): Promise<any> {
+    try {
+      const result = await this.elasticsearchClient.indices.delete({
+        index,
+      });
+      return result;
+    } catch (error) {
+      this.logger.error(`Error deleting index ${index}:`, error);
+      throw error;
+    }
+  }
+
+  async bulkIndex(operations: any[]): Promise<any> {
+    try {
+      const result = await this.elasticsearchClient.bulk({
+        body: operations,
+      });
+      return result;
+    } catch (error) {
+      this.logger.error('Error performing bulk operation:', error);
+      throw error;
+    }
+  }
+}

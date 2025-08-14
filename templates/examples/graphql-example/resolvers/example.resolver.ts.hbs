@@ -1,0 +1,66 @@
+import {
+  INPUT_KEY,
+  INPUT_PAGINATION,
+  INPUT_SORT,
+} from '@common/common.constraints';
+import { PaginationInput } from '@common/inputs/pagination.input';
+import { Success } from '@common/responses/success.response';
+import { Errors } from '@app/utils/registerEnums';
+import { GraphQLError } from 'graphql';
+import { ExampleCreateInput } from '../inputs/example-create.input';
+import { ExampleFindManySortInput } from '../inputs/example-find-many-sort.input';
+import { ExampleFindManyInput } from '../inputs/example-find-many.input';
+import { ExampleUpdateInput } from '../inputs/example-update.input';
+import { ExampleInput } from '../inputs/example.input';
+import { ExampleObject } from '../objects/example.object';
+import { ExamplePaginationResponse } from '../responses/example-pagination.response';
+import { ExampleService } from '../services/example.service';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+
+@Resolver(() => ExampleObject)
+export class ExampleResolver {
+  constructor(private readonly exampleService: ExampleService) {}
+
+  @Query(() => ExampleObject)
+  async example(@Args(INPUT_KEY) input: ExampleInput): Promise<ExampleObject> {
+    const example = await this.exampleService.findById(input.id);
+    if (!example) {
+      throw new GraphQLError('Example not found', {
+        extensions: { code: Errors.EXAMPLE_NOT_FOUND_ERROR_CODE }
+      });
+    }
+    return new ExampleObject(example);
+  }
+
+  @Mutation(() => ExampleObject)
+  async exampleCreate(@Args(INPUT_KEY) input: ExampleCreateInput): Promise<ExampleObject> {
+    const example = await this.exampleService.create(input);
+    return new ExampleObject(example);
+  }
+
+  @Mutation(() => ExampleObject)
+  async exampleUpdate(@Args(INPUT_KEY) input: ExampleUpdateInput): Promise<ExampleObject> {
+    const example = await this.exampleService.updateById(input.id, input);
+    if (!example) {
+      throw new GraphQLError('Example not found', {
+        extensions: { code: Errors.EXAMPLE_NOT_FOUND_ERROR_CODE }
+      });
+    }
+    return new ExampleObject(example);
+  }
+
+  @Mutation(() => Success)
+  async exampleDelete(@Args(INPUT_KEY) input: ExampleInput): Promise<Success> {
+    await this.exampleService.deleteById(input.id);
+    return new Success();
+  }
+
+  @Query(() => ExamplePaginationResponse)
+  async examples(
+    @Args(INPUT_KEY) input: ExampleFindManyInput,
+    @Args(INPUT_SORT) sort: ExampleFindManySortInput,
+    @Args(INPUT_PAGINATION) pagination: PaginationInput,
+  ): Promise<ExamplePaginationResponse> {
+    return this.exampleService.findAll(input, sort, pagination);
+  }
+}

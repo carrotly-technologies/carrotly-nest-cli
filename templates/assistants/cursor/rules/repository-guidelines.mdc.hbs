@@ -1,0 +1,15 @@
+{{#if isMongoose}}---
+description: Repository Layer Implementation Guidelines
+globs: "**/*.repository.ts"
+alwaysApply: true
+---
+- Repositories handle database logic only, not business logic
+- Use the Mongoose model injection pattern:
+  ```ts
+  constructor(@InjectModel(Entity.name) private readonly entityModel: Model<EntityDocument>) {}
+  ```
+- Implement CRUD operations with clear, typed return values
+- Never implement business rules in repositories
+- Handle database errors appropriately but don't transform them into business errors
+- Return null for not found items, let service layer handle business logic
+@repository-template.ts{{/if}}

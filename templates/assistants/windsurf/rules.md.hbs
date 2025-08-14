@@ -1,0 +1,171 @@
+# {{projectName}} - NestJS Development Guidelines
+
+This project is a NestJS application using {{#if isGraphQL}}GraphQL{{/if}}{{#if isRest}}REST API{{/if}} with {{#if isMongoose}}MongoDB (Mongoose){{/if}}{{#if isPrisma}}{{#if_eq database 'postgresql'}}PostgreSQL{{/if_eq}}{{#if_eq database 'mysql'}}MySQL{{/if_eq}} (Prisma){{/if}}.
+
+## Module Structure
+
+Each feature module should follow this structure:
+
+```
+src/
+└── entity/
+    {{#if isGraphQL}}├── inputs/
+    │   └── entity-*.input.ts
+    ├── objects/
+    │   └── entity.object.ts{{/if}}
+    {{#if isRest}}├── dto/
+    │   └── entity-*.dto.ts{{/if}}
+    ├── errors/
+    │   ├── entity.errors.ts
+    │   └── entity-*.error.ts
+    ├── entity.module.ts
+    {{#if isGraphQL}}├── entity.resolver.ts{{/if}}
+    {{#if isRest}}├── entity.controller.ts{{/if}}
+    ├── entity.service.ts
+    {{#if isMongoose}}├── entity.repository.ts
+    └── entity.schema.ts{{/if}}
+    {{#if isPrisma}}└── (using Prisma - no repository/schema files needed){{/if}}
+```
+
+## File Naming Conventions
+
+- Use module name as prefix: `user.service.ts`, `user.module.ts`
+- {{#if isGraphQL}}GraphQL files: `*.object.ts` (output), `*.input.ts` (input){{/if}}
+- {{#if isRest}}REST files: `*.dto.ts` (data transfer objects), `*.controller.ts`{{/if}}
+- Error files: `entity-specific.error.ts` for individual errors
+
+## Dependency Flow
+
+{{#if isGraphQL}}Resolvers{{/if}}{{#if isRest}}Controllers{{/if}} → Services{{#if isMongoose}} → Repositories → MongoDB Models{{/if}}{{#if isPrisma}} → PrismaService{{/if}}
+
+{{#if isGraphQL}}
+## GraphQL Guidelines
+
+### Resolvers
+- Queries: `user` (single), `users` (multiple)
+- Mutations: `userCreate`, `userUpdate`, `userDelete`
+- Use constants from `src/common/common.constraints.ts`:
+  ```typescript
+  @Args(INPUT_KEY) input: UserInput,
+  @Args(INPUT_SORT) sort: UserSortInput,
+  @Args(INPUT_PAGINATION) pagination: PaginationInput
+  ```
+
+### Input Types
+- Use `@InputType()` decorator
+{{#if isMongoose}}- Use `GraphQLObjectID` for MongoDB IDs{{/if}}
+- Create specific inputs: `UserCreateInput`, `UserUpdateInput`
+- Put multiple inputs in `inputs/` directory
+
+### Object Types
+- Use `@ObjectType()` decorator
+{{#if isMongoose}}- Standard constructor for MongoDB documents:
+  ```typescript
+  constructor(input: EntityDocument | EntityObject) {
+    Object.assign(this, {
+      ...((input as any)._doc
+        ? (input as EntityDocument).toObject({ virtuals: true })
+        : input),
+    });
+  }
+  ```{{/if}}
+{{/if}}
+
+{{#if isRest}}
+## REST API Guidelines
+
+### Controllers
+- Use HTTP decorators: `@Get()`, `@Post()`, `@Put()`, `@Delete()`
+- Apply Swagger decorators: `@ApiOperation()`, `@ApiResponse()`
+- Validate with DTOs using class-validator
+- Follow RESTful patterns: `/users`, `/users/:id`
+
+### DTOs
+- Use class-validator: `@IsString()`, `@MinLength()`
+- Swagger documentation: `@ApiProperty()`
+- Separate DTOs: `CreateUserDto`, `UpdateUserDto`, `UserResponseDto`
+{{/if}}
+
+## Error Handling
+
+- Extend base errors from `src/common/errors/business.error.ts`
+- Available base classes: `BusinessError`, `ValidationError`, `AuthenticationError`, `NotFoundError`, `ForbiddenError`, `InternalError`
+- Never use base error classes directly
+{{#if isGraphQL}}- Register error codes in `src/utils/registerEnums.ts`{{/if}}
+
+Standard error pattern:
+```typescript
+export class EntityNotFoundError extends NotFoundError {
+  constructor() {
+    super('Entity not found', ENTITY_NOT_FOUND_CODE);
+  }
+}
+```
+
+{{#if isMongoose}}
+## MongoDB with Mongoose
+
+### Schemas
+- Use `@Schema()` decorator
+- Export types: `export type EntityDocument = Entity & Document;`
+- Register in `src/common/modules/app-mongoose-models.module.ts`
+
+### Repositories
+- Inject models: `@InjectModel(Entity.name) private readonly entityModel: Model<EntityDocument>`
+- Handle database operations only, no business logic
+- Return null for not found, let services handle business errors
+{{/if}}
+
+{{#if isPrisma}}
+## {{#if_eq database 'postgresql'}}PostgreSQL{{/if_eq}}{{#if_eq database 'mysql'}}MySQL{{/if_eq}} with Prisma
+
+- Inject PrismaService in services: `constructor(private readonly prisma: PrismaService)`
+- Use Prisma client methods: `findMany`, `findUnique`, `create`, `update`, `delete`
+- Handle Prisma errors (P2002, P2025, etc.)
+- Use transactions for complex operations
+- Run `npm run prisma:generate` after schema changes
+{{/if}}
+
+## Service Guidelines
+
+- Handle business logic only
+{{#if isMongoose}}- Call repositories for data access{{/if}}
+{{#if isPrisma}}- Use PrismaService for data access{{/if}}
+- Stateless and focused operations
+- Validate inputs and throw appropriate errors
+- Return data in expected format for {{#if isGraphQL}}GraphQL resolvers{{/if}}{{#if isRest}}REST controllers{{/if}}
+
+## Code Quality
+
+- Use TypeScript strict mode
+- Follow ESLint and Prettier configurations
+- Write meaningful names for variables and functions
+- Keep functions small and focused
+- Add JSDoc for complex functions
+
+{{#if hasRedis}}
+## Redis Caching
+
+- Use RedisService for all cache operations
+- Handle cache failures gracefully
+- Set appropriate TTL values
+- Implement cache-aside pattern
+{{/if}}
+
+{{#if hasElasticsearch}}
+## Elasticsearch
+
+- Use ElasticsearchService for search operations
+- Index data properly with correct mappings
+- Handle search errors gracefully
+- Implement proper aggregations for analytics
+{{/if}}
+
+{{#if hasRabbitmq}}
+## RabbitMQ Messaging
+
+- Use RabbitMQService for message operations
+- Implement proper error handling and retries
+- Use appropriate exchange types
+- Handle message acknowledgments properly
+{{/if}}

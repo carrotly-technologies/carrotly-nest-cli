@@ -17,7 +17,13 @@ export type DatabaseType = 'mongodb' | 'postgresql' | 'mysql';
 
 export type ServiceType = 'redis' | 'elasticsearch' | 'rabbitmq';
 
-export type CodeAssistantType = 'cursor' | 'copilot' | 'none';
+export type CodeAssistantType =
+  | 'cursor'
+  | 'windsurf'
+  | 'copilot'
+  | 'claude'
+  | 'warp'
+  | 'none';
 
 export interface TemplateContext {
   projectName: string;

@@ -1,0 +1,35 @@
+import { Module } from '@nestjs/common';
+import { RabbitMQService } from './rabbitmq.service';
+import { RabbitMQConfig } from '../../config/rabbitmq.config';
+import * as amqp from 'amqplib';
+
+@Module({
+  providers: [
+    {
+      provide: 'RABBITMQ_CONNECTION',
+      useFactory: async (rabbitmqConfig: RabbitMQConfig) => {
+        try {
+          const connection = await amqp.connect(rabbitmqConfig.getConnectionUrl());
+          
+          connection.on('error', (err) => {
+            console.error('RabbitMQ Connection Error:', err);
+          });
+
+          connection.on('close', () => {
+            console.log('RabbitMQ Connection closed');
+          });
+
+          console.log('RabbitMQ Connection established');
+          return connection;
+        } catch (error) {
+          console.error('Failed to connect to RabbitMQ:', error);
+          throw error;
+        }
+      },
+      inject: [RabbitMQConfig],
+    },
+    RabbitMQService,
+  ],
+  exports: [RabbitMQService],
+})
+export class RabbitMQModule {}

@@ -1,0 +1,40 @@
+import { Global, Module } from '@nestjs/common';
+import { ConfigModule as NestConfigModule } from '@nestjs/config';
+
+{{#if isMongoose}}
+import { DatabaseConfig } from './database.config';
+{{/if}}
+{{#if hasRedis}}
+import { RedisConfig } from './redis.config';
+{{/if}}
+import { validate } from './env.variables';
+import { ServerConfig } from './server.config';
+
+@Global()
+@Module({
+  imports: [
+    NestConfigModule.forRoot({
+      validate,
+      isGlobal: true,
+    }),
+  ],
+  providers: [
+    ServerConfig,
+{{#if isMongoose}}
+    DatabaseConfig,
+{{/if}}
+{{#if hasRedis}}
+    RedisConfig,
+{{/if}}
+  ],
+  exports: [
+    ServerConfig,
+{{#if isMongoose}}
+    DatabaseConfig,
+{{/if}}
+{{#if hasRedis}}
+    RedisConfig,
+{{/if}}
+  ],
+})
+export class AppConfigModule {}

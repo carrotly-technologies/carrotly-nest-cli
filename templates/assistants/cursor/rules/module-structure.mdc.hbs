@@ -1,0 +1,29 @@
+---
+description: Module Structure Guidelines
+globs: "**/*.module.ts"
+alwaysApply: true
+---
+- Organize module files in a consistent structure:
+  ```
+  src/
+  └── entity/
+      {{#if isGraphQL}}├── inputs/
+      │   └── entity-*.input.ts
+      └── objects/
+      │   └── entity.object.ts{{/if}}
+      {{#if isRest}}├── dto/
+      │   └── entity-*.dto.ts{{/if}}
+      ├── errors/
+      │   ├── entity.errors.ts
+      │   └── entity-*.error.ts
+      ├── entity.module.ts
+      {{#if isGraphQL}}├── entity.resolver.ts{{/if}}
+      {{#if isRest}}├── entity.controller.ts{{/if}}
+      ├── entity.service.ts
+      {{#if isMongoose}}├── entity.repository.ts
+      └── entity.schema.ts{{/if}}
+      {{#if isPrisma}}└── (no repository/schema - using Prisma){{/if}}
+  ```
+- Each module must be self-contained with its own module definition, {{#if isGraphQL}}resolver{{/if}}{{#if isRest}}controller{{/if}}, service{{#if isMongoose}}, repository, and schema{{/if}} files
+- Follow proper dependency injection: {{#if isGraphQL}}Resolvers{{/if}}{{#if isRest}}Controllers{{/if}} -> Services{{#if isMongoose}} -> Repositories -> Models{{/if}}{{#if isPrisma}} -> PrismaService{{/if}}
+@module-template.ts

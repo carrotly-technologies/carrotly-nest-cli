@@ -9,7 +9,7 @@ export function createTemplateContext(config: ProjectConfig): TemplateContext {
   return {
     projectName: config.name,
     projectDescription:
-      config.description || `A NestJS application named ${config.name}`,
+      config.description ?? `A NestJS application named ${config.name}`,
     api: config.api,
     orm: config.orm,
     database: config.database,

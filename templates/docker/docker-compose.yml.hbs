@@ -1,0 +1,186 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL={{#if (eq orm 'prisma')}}{{#if (eq database 'postgresql')}}postgresql://postgres:password@postgres:5432/{{projectName}}{{else}}mysql://root:password@mysql:3306/{{projectName}}{{/if}}{{else}}mongodb://mongo:27017/{{projectName}}{{/if}}
+      {{#if hasRedis}}
+      - REDIS_URL=redis://redis:6379
+      {{/if}}
+      {{#if hasElasticsearch}}
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      {{/if}}
+      {{#if hasRabbitmq}}
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      {{/if}}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      {{#if (eq orm 'mongoose')}}
+      - mongo
+      {{/if}}
+      {{#if (eq orm 'prisma')}}
+      {{#if (eq database 'postgresql')}}
+      - postgres
+      {{else}}
+      - mysql
+      {{/if}}
+      {{/if}}
+      {{#if hasRedis}}
+      - redis
+      {{/if}}
+      {{#if hasElasticsearch}}
+      - elasticsearch
+      {{/if}}
+      {{#if hasRabbitmq}}
+      - rabbitmq
+      {{/if}}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+{{#if (eq orm 'mongoose')}}
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: {{projectName}}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/{{projectName}} --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+{{/if}}
+
+{{#if (eq orm 'prisma')}}
+{{#if (eq database 'postgresql')}}
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: {{projectName}}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d {{projectName}}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+{{else}}
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: {{projectName}}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+{{/if}}
+{{/if}}
+
+{{#if hasRedis}}
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+{{/if}}
+
+{{#if hasElasticsearch}}
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    restart: unless-stopped
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+{{/if}}
+
+{{#if hasRabbitmq}}
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+{{/if}}
+
+volumes:
+{{#if (eq orm 'mongoose')}}
+  mongo_data:
+{{/if}}
+{{#if (eq orm 'prisma')}}
+{{#if (eq database 'postgresql')}}
+  postgres_data:
+{{else}}
+  mysql_data:
+{{/if}}
+{{/if}}
+{{#if hasRedis}}
+  redis_data:
+{{/if}}
+{{#if hasElasticsearch}}
+  elasticsearch_data:
+{{/if}}
+{{#if hasRabbitmq}}
+  rabbitmq_data:
+{{/if}}

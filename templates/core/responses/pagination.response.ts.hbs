@@ -1,0 +1,44 @@
+import { Field, ObjectType, Int } from '@nestjs/graphql';
+import { Type } from '@nestjs/common';
+
+@ObjectType()
+export class PaginationMetadata {
+  @Field(() => Int)
+  totalCount: number;
+
+  @Field(() => Int)
+  totalPages: number;
+
+  @Field(() => Int)
+  currentPage: number;
+
+  @Field(() => Int)
+  pageSize: number;
+
+  @Field(() => Boolean)
+  hasNextPage: boolean;
+
+  @Field(() => Boolean)
+  hasPreviousPage: boolean;
+
+  constructor(totalCount: number, currentPage: number, pageSize: number) {
+    this.totalCount = totalCount;
+    this.currentPage = currentPage;
+    this.pageSize = pageSize;
+    this.totalPages = Math.ceil(totalCount / pageSize);
+    this.hasNextPage = currentPage < this.totalPages;
+    this.hasPreviousPage = currentPage > 1;
+  }
+}
+
+export function PaginateResult<T>(classRef: Type<T>): any {
+  @ObjectType({ isAbstract: true })
+  abstract class PaginatedType {
+    @Field(() => [classRef])
+    items: T[];
+
+    @Field(() => PaginationMetadata)
+    metadata: PaginationMetadata;
+  }
+  return PaginatedType;
+}

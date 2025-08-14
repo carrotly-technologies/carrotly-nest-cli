@@ -1,0 +1,315 @@
+# {{projectName}} - Development Instructions for GitHub Copilot
+
+You are working on a NestJS application that uses:
+- **API**: {{#if isGraphQL}}GraphQL with Apollo Server{{/if}}{{#if isRest}}REST API with Swagger{{/if}}
+- **Database**: {{#if isMongoose}}MongoDB with Mongoose{{/if}}{{#if isPrisma}}{{#if_eq database 'postgresql'}}PostgreSQL{{/if_eq}}{{#if_eq database 'mysql'}}MySQL{{/if_eq}} with Prisma{{/if}}
+- **Additional Services**: {{#if hasRedis}}Redis{{/if}}{{#if hasElasticsearch}}{{#if hasRedis}}, {{/if}}Elasticsearch{{/if}}{{#if hasRabbitmq}}{{#if hasRedis}}{{#if hasElasticsearch}}, {{/if}}, {{else}}{{#if hasElasticsearch}}, {{/if}}{{/if}}RabbitMQ{{/if}}
+
+## Code Generation Guidelines
+
+### Module Structure
+When creating new feature modules, use this structure:
+```
+src/entity/
+├── entity.module.ts
+{{#if isGraphQL}}├── entity.resolver.ts{{/if}}
+{{#if isRest}}├── entity.controller.ts{{/if}}
+├── entity.service.ts
+{{#if isMongoose}}├── entity.repository.ts
+├── entity.schema.ts{{/if}}
+{{#if isGraphQL}}├── inputs/entity-*.input.ts
+├── objects/entity.object.ts{{/if}}
+{{#if isRest}}├── dto/entity-*.dto.ts{{/if}}
+└── errors/entity-*.error.ts
+```
+
+### File Naming
+- Use entity name as prefix: `user.service.ts`, `user.module.ts`
+- {{#if isGraphQL}}GraphQL: `*.object.ts` for outputs, `*.input.ts` for inputs{{/if}}
+- {{#if isRest}}REST: `*.dto.ts` for data transfer objects{{/if}}
+- Errors: `entity-specific.error.ts`
+
+{{#if isGraphQL}}
+### GraphQL Patterns
+
+**Resolvers:**
+- Queries: `entity` (single), `entities` (plural)
+- Mutations: `entityCreate`, `entityUpdate`, `entityDelete`
+- Always use constants from `src/common/common.constraints.ts`:
+
+```typescript
+import { INPUT_KEY, INPUT_SORT, INPUT_PAGINATION } from '../../common/common.constraints';
+
+@Query(() => EntityObject)
+async entity(@Args(INPUT_KEY) input: EntityInput): Promise<EntityObject> {
+  // implementation
+}
+
+@Query(() => EntityPaginationResponse)
+async entities(
+  @Args(INPUT_KEY) input: EntityFindManyInput,
+  @Args(INPUT_SORT) sort: EntityFindManySortInput,
+  @Args(INPUT_PAGINATION) pagination: PaginationInput,
+): Promise<EntityPaginationResponse> {
+  // implementation
+}
+```
+
+**Input Types:**
+```typescript
+@InputType()
+export class EntityCreateInput {
+{{#if isMongoose}}  @Field(() => GraphQLObjectID, { nullable: true })
+  id?: string;{{/if}}
+  
+  @Field()
+  name: string;
+}
+```
+
+**Object Types:**
+```typescript
+@ObjectType()
+export class EntityObject {
+{{#if isMongoose}}  constructor(input: EntityDocument | EntityObject) {
+    Object.assign(this, {
+      ...((input as any)._doc
+        ? (input as EntityDocument).toObject({ virtuals: true })
+        : input),
+    });
+  }{{/if}}
+
+  @Field(() => ID)
+  id: string;
+
+  @Field()
+  name: string;
+}
+```
+{{/if}}
+
+{{#if isRest}}
+### REST API Patterns
+
+**Controllers:**
+```typescript
+@Controller('entities')
+@ApiTags('entities')
+export class EntityController {
+  constructor(private readonly entityService: EntityService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Get all entities' })
+  @ApiResponse({ status: 200, type: [EntityResponseDto] })
+  async findAll(): Promise<EntityResponseDto[]> {
+    return this.entityService.findAll();
+  }
+
+  @Post()
+  @ApiOperation({ summary: 'Create entity' })
+  @ApiResponse({ status: 201, type: EntityResponseDto })
+  async create(@Body() createDto: CreateEntityDto): Promise<EntityResponseDto> {
+    return this.entityService.create(createDto);
+  }
+}
+```
+
+**DTOs:**
+```typescript
+export class CreateEntityDto {
+  @ApiProperty({ description: 'Entity name', example: 'Example' })
+  @IsString()
+  @MinLength(2)
+  name: string;
+}
+
+export class EntityResponseDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  name: string;
+}
+```
+{{/if}}
+
+### Error Handling
+Always extend base error classes and never use them directly:
+
+```typescript
+import { NotFoundError } from '../../common/errors/business.error';
+
+export const ENTITY_NOT_FOUND_CODE = 'ENTITY_NOT_FOUND';
+
+export class EntityNotFoundError extends NotFoundError {
+  constructor() {
+    super('Entity not found', ENTITY_NOT_FOUND_CODE);
+  }
+}
+```
+
+{{#if isGraphQL}}Register errors in `src/utils/registerEnums.ts`:
+```typescript
+export const Errors = {
+  ...GqlCommonErrors,
+  ...GqlEntityErrors,
+};
+```{{/if}}
+
+{{#if isMongoose}}
+### MongoDB/Mongoose Patterns
+
+**Schemas:**
+```typescript
+@Schema()
+export class Entity {
+  @Prop({ required: true })
+  name: string;
+
+  @Prop({ default: Date.now })
+  createdAt: Date;
+}
+
+export type EntityDocument = Entity & Document;
+export const EntitySchema = SchemaFactory.createForClass(Entity);
+```
+
+**Repositories:**
+```typescript
+@Injectable()
+export class EntityRepository {
+  constructor(
+    @InjectModel(Entity.name) private readonly entityModel: Model<EntityDocument>,
+  ) {}
+
+  async findById(id: string): Promise<EntityDocument | null> {
+    return this.entityModel.findById(id).exec();
+  }
+
+  async create(data: any): Promise<EntityDocument> {
+    const entity = new this.entityModel(data);
+    return entity.save();
+  }
+}
+```
+
+Register schemas in `src/common/modules/app-mongoose-models.module.ts`.
+{{/if}}
+
+{{#if isPrisma}}
+### Prisma Patterns
+
+**Service with Prisma:**
+```typescript
+@Injectable()
+export class EntityService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findById(id: string): Promise<Entity | null> {
+    return this.prisma.entity.findUnique({ where: { id } });
+  }
+
+  async create(data: Prisma.EntityCreateInput): Promise<Entity> {
+    return this.prisma.entity.create({ data });
+  }
+
+  async update(id: string, data: Prisma.EntityUpdateInput): Promise<Entity> {
+    return this.prisma.entity.update({ where: { id }, data });
+  }
+}
+```
+
+Use proper Prisma types: `Entity`, `Prisma.EntityCreateInput`, etc.
+{{/if}}
+
+### Service Layer
+- Handle business logic only
+{{#if isMongoose}}- Delegate database operations to repositories{{/if}}
+{{#if isPrisma}}- Use PrismaService for database operations{{/if}}
+- Always validate inputs and throw appropriate errors
+- Keep services stateless
+
+```typescript
+@Injectable()
+export class EntityService {
+  constructor(
+    {{#if isMongoose}}private readonly entityRepository: EntityRepository,{{/if}}
+    {{#if isPrisma}}private readonly prisma: PrismaService,{{/if}}
+  ) {}
+
+  async findById(id: string): Promise<{{#if isGraphQL}}EntityObject{{/if}}{{#if isRest}}EntityResponseDto{{/if}}> {
+    {{#if isMongoose}}const entity = await this.entityRepository.findById(id);{{/if}}
+    {{#if isPrisma}}const entity = await this.prisma.entity.findUnique({ where: { id } });{{/if}}
+    
+    if (!entity) {
+      throw new EntityNotFoundError();
+    }
+
+    return {{#if isGraphQL}}new EntityObject(entity){{/if}}{{#if isRest}}entity{{/if}};
+  }
+}
+```
+
+{{#if hasRedis}}
+### Redis Usage
+```typescript
+constructor(private readonly redisService: RedisService) {}
+
+// Cache data
+await this.redisService.set(`entity:${id}`, JSON.stringify(entity), 3600);
+
+// Get cached data
+const cached = await this.redisService.get(`entity:${id}`);
+```
+{{/if}}
+
+{{#if hasElasticsearch}}
+### Elasticsearch Usage
+```typescript
+constructor(private readonly elasticsearchService: ElasticsearchService) {}
+
+// Index document
+await this.elasticsearchService.index({
+  index: 'entities',
+  id: entity.id,
+  body: entity
+});
+
+// Search
+const result = await this.elasticsearchService.search({
+  index: 'entities',
+  body: { query: { match: { name: searchTerm } } }
+});
+```
+{{/if}}
+
+{{#if hasRabbitmq}}
+### RabbitMQ Usage
+```typescript
+constructor(private readonly rabbitmqService: RabbitMQService) {}
+
+// Publish message
+await this.rabbitmqService.publish('entity.created', entity);
+
+// Handle message
+@MessageHandler('entity.created')
+async handleEntityCreated(entity: Entity) {
+  // process entity
+}
+```
+{{/if}}
+
+## Important Constants
+Always use these constants instead of hardcoded strings:
+- `INPUT_KEY = 'input'`
+- `INPUT_PAGINATION = 'pagination'`
+- `INPUT_SORT = 'sort'`
+
+Import from: `src/common/common.constraints.ts`
+
+## Code Style
+- Use TypeScript strict mode
+- Follow ESLint rules
+- Use meaningful variable names
+- Keep functions focused and small
+- Add JSDoc for complex functions

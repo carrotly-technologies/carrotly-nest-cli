@@ -1,0 +1,21 @@
+{{#if isRest}}---
+description: Data Transfer Object (DTO) Guidelines
+globs: "**/*.dto.ts"
+alwaysApply: true
+---
+- Use class-validator decorators for input validation:
+  ```ts
+  @IsString()
+  @MinLength(2)
+  name: string;
+  ```
+- Apply Swagger decorators for API documentation:
+  ```ts
+  @ApiProperty({ description: 'User name', example: 'John Doe' })
+  name: string;
+  ```
+- Create separate DTOs for different operations: CreateUserDto, UpdateUserDto, UserResponseDto
+- Use proper TypeScript types and make fields optional/required as needed
+- Group related DTOs in dto/ directory when there are multiple
+- Extend base DTOs when appropriate using inheritance
+@dto-template.ts{{/if}}

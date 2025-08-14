@@ -1,0 +1,11 @@
+import { InputType, Field } from '@nestjs/graphql';
+import { SortDirection } from '@common/inputs/sort.input';
+
+@InputType()
+export class ExampleFindManySortInput {
+  @Field(() => SortDirection, { defaultValue: SortDirection.ASC, nullable: true })
+  name?: SortDirection;
+
+  @Field(() => SortDirection, { defaultValue: SortDirection.DESC, nullable: true })
+  createdAt?: SortDirection;
+}

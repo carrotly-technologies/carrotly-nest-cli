@@ -1,0 +1,19 @@
+{{#if isGraphQL}}---
+description: GraphQL Object Type Guidelines  
+globs: "**/*.object.ts"
+alwaysApply: true
+---
+- Use `@ObjectType()` decorator for all GraphQL output types
+{{#if isMongoose}}- Always implement the standard constructor pattern to handle MongoDB documents:
+  ```ts
+  constructor(input: EntityDocument | EntityObject) {
+    Object.assign(this, {
+      ...((input as any)._doc
+        ? (input as EntityDocument).toObject({ virtuals: true })
+        : input),
+    });
+  }
+  ```
+- This pattern ensures proper handling of virtual fields like `id` vs `_id`{{/if}}
+- This should expose properties from {{#if isMongoose}}`<entity>.schema.ts`{{/if}}{{#if isPrisma}}Prisma schema{{/if}} file, without properties which shouldn't be exposed like password hash, and other which are not needed for client to use, and just for proper handling on backend
+@object-template.ts{{/if}}

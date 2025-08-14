@@ -1,0 +1,20 @@
+import { registerEnumType } from '@nestjs/graphql';
+import { GqlCommonErrors } from '@common/errors/graphql-common-errors';
+import { Environment } from '@config/env.variables';
+import { Sort } from '@common/enum/sort.enum';
+{{#if isGraphQL}}
+import { GqlExampleErrors } from '@modules/example-module/errors/graphql-example-errors';
+{{/if}}
+
+export const Errors = {
+  ...GqlCommonErrors,
+{{#if isGraphQL}}
+  ...GqlExampleErrors,
+{{/if}}
+};
+
+export const registerEnums = () => {
+  registerEnumType(Errors, { name: 'Error' });
+  registerEnumType(Environment, { name: 'Environment' });
+  registerEnumType(Sort, { name: 'Sort' });
+};

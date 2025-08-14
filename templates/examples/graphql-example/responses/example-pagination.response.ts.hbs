@@ -1,0 +1,6 @@
+import { PaginateResult } from '@common/responses/pagination.response';
+import { ExampleObject } from '../objects/example.object';
+import { ObjectType } from '@nestjs/graphql';
+
+@ObjectType()
+export class ExamplePaginationResponse extends PaginateResult(ExampleObject) {}

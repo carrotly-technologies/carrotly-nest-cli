@@ -1,0 +1,61 @@
+import { Module } from '@nestjs/common';
+import { AppConfigModule } from '@config/config.module';
+import { AppDbModule } from '@common/modules/app-db.module';
+{{#if isGraphQL}}
+import { AppGqlModule } from '@common/modules/app-gql.module';
+{{/if}}
+{{#if isMongoose}}
+import { AppMongooseModelsModule } from '@common/modules/app-mongoose-models.module';
+{{/if}}
+{{#if isGraphQL}}
+import { PaginationModule } from '@app/pagination/pagination.module';
+{{/if}}
+{{#if isRest}}
+import { AppController } from '@app/app.controller';
+import { AppService } from '@app/app.service';
+{{/if}}
+{{#if hasRedis}}
+import { RedisModule } from '@app/external-services/redis/redis.module';
+{{/if}}
+{{#if hasElasticsearch}}
+import { ElasticsearchModule } from '@app/external-services/elasticsearch/elasticsearch.module';
+{{/if}}
+{{#if hasRabbitmq}}
+import { RabbitMQModule } from '@app/external-services/rabbitmq/rabbitmq.module';
+{{/if}}
+import { ExampleModule } from '@modules/example-module/example.module';
+
+const commonModules = [
+  AppConfigModule,
+  AppDbModule,
+{{#if isGraphQL}}
+  AppGqlModule,
+{{/if}}
+{{#if isMongoose}}
+  AppMongooseModelsModule,
+{{/if}}
+{{#if isGraphQL}}
+  PaginationModule,
+{{/if}}
+{{#if hasRedis}}
+  RedisModule,
+{{/if}}
+{{#if hasElasticsearch}}
+  ElasticsearchModule,
+{{/if}}
+{{#if hasRabbitmq}}
+  RabbitMQModule,
+{{/if}}
+];
+
+@Module({
+  imports: [
+    ...commonModules,
+    ExampleModule,
+  ],
+{{#if isRest}}
+  controllers: [AppController],
+  providers: [AppService],
+{{/if}}
+})
+export class AppModule {}

@@ -1,0 +1,18 @@
+{{#if isRest}}---
+description: REST Controller Implementation Guidelines
+globs: "**/*.controller.ts"
+alwaysApply: true
+---
+- Use proper HTTP decorators: @Get(), @Post(), @Put(), @Delete(), @Patch()
+- Apply DTOs for request validation using class-validator
+- Use proper HTTP status codes and response formats
+- Handle errors properly and return appropriate HTTP status codes
+- Apply Swagger decorators for API documentation:
+  ```ts
+  @ApiOperation({ summary: 'Create a new user' })
+  @ApiResponse({ status: 201, type: UserDto })
+  ```
+- Follow RESTful URL patterns: /users, /users/:id, etc.
+- Validate request bodies and query parameters using DTOs
+- Delegate business logic to services, controllers should be thin
+@controller-template.ts{{/if}}

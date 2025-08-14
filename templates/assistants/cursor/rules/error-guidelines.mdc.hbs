@@ -1,0 +1,25 @@
+---
+description: Error Handling Guidelines
+globs: "**/*.error.ts"
+alwaysApply: true
+---
+- Name individual error files as `<entity>-*.error.ts` containing one class
+{{#if isGraphQL}}- Error codes in `<entity>.errors.ts` files under one exported const named `Graphql<entity>errors`{{/if}}
+- All error classes must extend base errors from `src/common/errors/business.error.ts`:
+  - `BusinessError`
+  - `ValidationError`
+  - `AuthenticationError`
+  - `NotFoundError`
+  - `ForbiddenError`
+  - `InternalError`
+- Never use base error classes directly!
+{{#if isGraphQL}}- Register error grouped (`Graphql<entity>Errors`) codes in `src/utils/registerEnums.ts` for frontend mapping, in form of putting them inside array `Errors` as destructurized objects{{/if}}
+- Standard error implementation:
+  ```ts
+  export class EntityNotFoundError extends NotFoundError {
+    constructor() {
+      super('Entity not found', ENTITY_NOT_FOUND_CODE);
+    }
+  }
+  ```
+@error-template.ts

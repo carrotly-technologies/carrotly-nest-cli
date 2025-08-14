@@ -1,0 +1,214 @@
+# {{projectName}} - Warp AI Context
+
+## Project Summary
+{{projectName}} is a **NestJS** application with {{#if isGraphQL}}**GraphQL**{{/if}}{{#if isRest}}**REST API**{{/if}} using {{#if isMongoose}}**MongoDB + Mongoose**{{/if}}{{#if isPrisma}}**{{#if_eq database 'postgresql'}}PostgreSQL{{/if_eq}}{{#if_eq database 'mysql'}}MySQL{{/if_eq}} + Prisma**{{/if}}.
+
+## Quick Commands
+
+### Development
+```bash
+# Start development server
+npm run start:dev
+
+# Build project
+npm run build
+
+# Run tests
+npm run test
+
+# Lint code
+npm run lint
+
+# Format code
+npm run format
+```
+
+### Database
+{{#if isMongoose}}```bash
+# MongoDB is used - ensure MongoDB is running
+# Check connection in docker-compose.yml
+docker-compose up mongodb
+```{{/if}}
+{{#if isPrisma}}```bash
+# Generate Prisma client
+npm run prisma:generate
+
+# Run migrations
+npm run prisma:migrate
+
+# Reset database
+npm run prisma:reset
+
+# View database
+npm run prisma:studio
+```{{/if}}
+
+{{#if hasRedis}}### Redis
+```bash
+# Start Redis
+docker-compose up redis
+
+# Connect to Redis CLI
+redis-cli
+```{{/if}}
+
+## File Structure Quick Reference
+
+### Module Structure
+```
+src/entity/
+├── entity.module.ts          # Dependencies & exports
+{{#if isGraphQL}}├── entity.resolver.ts       # GraphQL queries/mutations{{/if}}
+{{#if isRest}}├── entity.controller.ts    # REST endpoints{{/if}}
+├── entity.service.ts         # Business logic
+{{#if isMongoose}}├── entity.repository.ts    # Data access
+├── entity.schema.ts          # MongoDB schema{{/if}}
+{{#if isGraphQL}}├── inputs/entity-*.input.ts # GraphQL inputs
+├── objects/entity.object.ts  # GraphQL objects{{/if}}
+{{#if isRest}}├── dto/entity-*.dto.ts     # REST DTOs{{/if}}
+└── errors/entity-*.error.ts  # Custom errors
+```
+
+### Key Constants
+Import from `src/common/common.constraints.ts`:
+- `INPUT_KEY = 'input'`
+- `INPUT_PAGINATION = 'pagination'`  
+- `INPUT_SORT = 'sort'`
+
+## Code Patterns
+
+{{#if isGraphQL}}
+### GraphQL Resolver Pattern
+```typescript
+@Query(() => EntityObject)
+async entity(@Args(INPUT_KEY) input: EntityInput): Promise<EntityObject> {
+  return this.entityService.findById(input.id);
+}
+
+@Mutation(() => EntityObject)  
+async entityCreate(@Args(INPUT_KEY) input: EntityCreateInput): Promise<EntityObject> {
+  return this.entityService.create(input);
+}
+```{{/if}}
+
+{{#if isRest}}
+### REST Controller Pattern
+```typescript
+@Controller('entities')
+@ApiTags('entities')
+export class EntityController {
+  @Get(':id')
+  @ApiResponse({ status: 200, type: EntityResponseDto })
+  async findOne(@Param('id') id: string): Promise<EntityResponseDto> {
+    return this.entityService.findById(id);
+  }
+}
+```{{/if}}
+
+### Service Pattern
+```typescript
+@Injectable()
+export class EntityService {
+  constructor(
+    {{#if isMongoose}}private readonly entityRepository: EntityRepository,{{/if}}
+    {{#if isPrisma}}private readonly prisma: PrismaService,{{/if}}
+  ) {}
+
+  async findById(id: string): Promise<{{#if isGraphQL}}EntityObject{{/if}}{{#if isRest}}EntityResponseDto{{/if}}> {
+    {{#if isMongoose}}const entity = await this.entityRepository.findById(id);{{/if}}
+    {{#if isPrisma}}const entity = await this.prisma.entity.findUnique({ where: { id } });{{/if}}
+    
+    if (!entity) {
+      throw new EntityNotFoundError();
+    }
+
+    return {{#if isGraphQL}}new EntityObject(entity){{/if}}{{#if isRest}}entity{{/if}};
+  }
+}
+```
+
+### Error Pattern
+```typescript
+export const ENTITY_NOT_FOUND_CODE = 'ENTITY_NOT_FOUND';
+
+export class EntityNotFoundError extends NotFoundError {
+  constructor() {
+    super('Entity not found', ENTITY_NOT_FOUND_CODE);
+  }
+}
+```
+
+## Environment Setup
+
+### Required Environment Variables
+```bash
+# Database
+{{#if isMongoose}}MONGODB_URI=mongodb://localhost:27017/{{projectName}}{{/if}}
+{{#if isPrisma}}DATABASE_URL="{{#if_eq database 'postgresql'}}postgresql://user:password@localhost:5432/{{projectName}}{{/if_eq}}{{#if_eq database 'mysql'}}mysql://user:password@localhost:3306/{{projectName}}{{/if_eq}}"{{/if}}
+
+# Server
+PORT=3000
+NODE_ENV=development
+
+{{#if hasRedis}}# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379{{/if}}
+
+{{#if hasElasticsearch}}# Elasticsearch  
+ELASTICSEARCH_NODE=http://localhost:9200{{/if}}
+
+{{#if hasRabbitmq}}# RabbitMQ
+RABBITMQ_URL=amqp://localhost:5672{{/if}}
+```
+
+## Common Troubleshooting
+
+### Database Issues
+{{#if isMongoose}}- **MongoDB connection failed**: Check if MongoDB is running (`docker-compose up mongodb`)
+- **Schema not registered**: Add to `app-mongoose-models.module.ts`{{/if}}
+{{#if isPrisma}}- **Prisma client outdated**: Run `npm run prisma:generate`
+- **Migration issues**: Run `npm run prisma:migrate reset`{{/if}}
+
+### Development Issues
+- **Module not found**: Check imports and file paths
+- **GraphQL schema error**: Verify decorators and types
+- **Lint errors**: Run `npm run lint --fix`
+
+### Performance Tips
+{{#if hasRedis}}- Use Redis for caching frequently accessed data
+- Set appropriate TTL values{{/if}}
+{{#if isMongoose}}- Add MongoDB indexes for query optimization
+- Use aggregation pipelines for complex queries{{/if}}
+{{#if isPrisma}}- Use `select` and `include` for efficient queries
+- Implement proper database indexes{{/if}}
+
+## Testing Commands
+```bash
+# Unit tests
+npm run test
+
+# E2E tests  
+npm run test:e2e
+
+# Coverage
+npm run test:cov
+
+# Watch mode
+npm run test:watch
+```
+
+## Useful Warp AI Prompts
+
+### Generate new module:
+"Create a new NestJS module for [entity] with {{#if isGraphQL}}GraphQL resolver{{/if}}{{#if isRest}}REST controller{{/if}}, service{{#if isMongoose}}, repository, and schema{{/if}} following the project patterns"
+
+### Add endpoint:
+"Add a {{#if isGraphQL}}GraphQL mutation{{/if}}{{#if isRest}}REST endpoint{{/if}} to [operation] [entity] with proper error handling"
+
+### Debug database query:
+"Help debug this {{#if isMongoose}}Mongoose{{/if}}{{#if isPrisma}}Prisma{{/if}} query that's returning unexpected results"
+
+### Optimize performance:
+"Suggest optimizations for this service method that queries large datasets"
+
+This context should help Warp AI understand your project structure and provide better assistance!

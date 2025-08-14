@@ -27,7 +27,7 @@ export class NewCommand {
       )
       .option(
         '-ca, --code-assistant <assistant>',
-        'code assistant (cursor|copilot|none)',
+        'code assistant (cursor|windsurf|copilot|claude|warp|none)',
       )
       .option('-dir, --directory <directory>', 'target directory')
       .option('--skip-prompts', 'skip interactive prompts')
@@ -86,14 +86,14 @@ export class NewCommand {
       : [];
 
     return {
-      name: name || 'my-nest-app',
+      name: name ?? 'my-nest-app',
       description: options.description,
-      api: options.api || 'graphql',
-      orm: options.orm || 'mongoose',
+      api: options.api ?? 'graphql',
+      orm: options.orm ?? 'mongoose',
       database: options.database,
       services: services as any[],
-      codeAssistant: options.codeAssistant || 'cursor',
-      directory: options.directory || `./${name || 'my-nest-app'}`,
+      codeAssistant: options.codeAssistant ?? 'none',
+      directory: options.directory ?? `./${name ?? 'my-nest-app'}`,
     };
   }
 
@@ -102,8 +102,8 @@ export class NewCommand {
 
     if (!validation.validForNewPackages) {
       const errors = [
-        ...(validation.errors || []),
-        ...(validation.warnings || []),
+        ...(validation.errors ?? []),
+        ...(validation.warnings ?? []),
       ];
       throw new Error(`Invalid project name: ${errors.join(', ')}`);
     }

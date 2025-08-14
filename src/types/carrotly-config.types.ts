@@ -35,7 +35,13 @@ export interface CarrotlyConfig {
 
     /** Development tools */
     tools: {
-      codeAssistant: 'cursor' | 'copilot' | 'none';
+      codeAssistant:
+        | 'cursor'
+        | 'windsurf'
+        | 'copilot'
+        | 'claude'
+        | 'warp'
+        | 'none';
       docker: boolean;
       testing: boolean;
     };
@@ -83,6 +89,6 @@ export interface CreateCarrotlyConfigOptions {
   ormType: 'mongoose' | 'prisma';
   database?: 'mongodb' | 'postgresql' | 'mysql';
   services: string[];
-  codeAssistant: 'cursor' | 'copilot' | 'none';
+  codeAssistant: 'cursor' | 'windsurf' | 'copilot' | 'claude' | 'warp' | 'none';
   cliVersion: string;
 }
