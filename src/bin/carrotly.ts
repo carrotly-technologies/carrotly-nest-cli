@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { NewCommand } from '../commands/new.command';
+import { InfoCommand } from '../commands/info.command';
 
 // Read package.json to get version
 const packageJsonPath = join(__dirname, '../../package.json');
@@ -20,6 +21,7 @@ program
 
 // Add commands
 program.addCommand(new NewCommand().getCommand());
+program.addCommand(new InfoCommand().getCommand());
 
 // Error handling
 program.on('command:*', () => {

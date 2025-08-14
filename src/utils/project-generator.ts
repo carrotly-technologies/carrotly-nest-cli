@@ -3,6 +3,8 @@ import * as path from 'path';
 import chalk from 'chalk';
 import ora from 'ora';
 import { ProjectConfig, TemplateContext } from '../types/project-config.types';
+import { ConfigManager } from './config-manager';
+import { CreateCarrotlyConfigOptions } from '../types/carrotly-config.types';
 
 export class ProjectGenerator {
   async generate(config: ProjectConfig): Promise<void> {
@@ -17,6 +19,9 @@ export class ProjectGenerator {
 
       // Generate base structure (placeholder)
       await this.generateBaseStructure(config, context);
+
+      // Create and save Carrotly configuration file
+      await this.createConfigurationFile(config);
 
       spinner.succeed('Project structure generated');
     } catch (error) {
@@ -99,5 +104,33 @@ yarn start:dev
     console.log(
       chalk.gray('   Full template system will be added in the next task.'),
     );
+  }
+
+  private async createConfigurationFile(config: ProjectConfig): Promise<void> {
+    const targetPath = path.resolve(config.directory);
+
+    // Prepare configuration options
+    const configOptions: CreateCarrotlyConfigOptions = {
+      projectName: config.name,
+      projectDescription: config.description,
+      directory: config.directory,
+      api: config.api,
+      ormType: config.orm,
+      database: config.database,
+      services: config.services,
+      codeAssistant: config.codeAssistant,
+      cliVersion: ConfigManager.getCliVersion(),
+    };
+
+    // Create configuration
+    const carrotlyConfig = ConfigManager.createConfig(configOptions);
+
+    // Add initial files to generated list
+    carrotlyConfig.generated.files = ['README.md', '.carrotly.json'];
+
+    // Save configuration file
+    await ConfigManager.saveConfig(carrotlyConfig, targetPath);
+
+    console.log(chalk.green('   ✓ Configuration saved to .carrotly.json'));
   }
 }
