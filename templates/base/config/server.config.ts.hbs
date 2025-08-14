@@ -1,0 +1,47 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
+import { Environment, EnvironmentVariables } from './env.variables';
+
+@Injectable()
+export class ServerConfig {
+  constructor(private readonly config: ConfigService<EnvironmentVariables>) {}
+
+  getPort(): number {
+    return this.config.get<number>('PORT') ?? 3000;
+  }
+
+  getEnv(): Environment {
+    return this.config.get<Environment>('NODE_ENV') ?? Environment.Development;
+  }
+
+  getAppName(): string {
+    return this.config.get<string>('APP_NAME') ?? '{{capitalize projectName}} API';
+  }
+
+  getCorsOrigin(): string {
+    return this.config.get<string>('CORS_ORIGIN') ?? '*';
+  }
+
+  isDebug(): boolean {
+    return !!this.config.get<boolean>('DEBUG');
+  }
+
+  isDevelopment(): boolean {
+    return this.getEnv() === Environment.Development || this.getEnv() === Environment.Local;
+  }
+
+  isProduction(): boolean {
+    return this.getEnv() === Environment.Production;
+  }
+{{#if isGraphQL}}
+
+  getEnablePlayground(): boolean {
+    return !!this.config.get<boolean>('ENABLE_PLAYGROUND');
+  }
+
+  getEnableIntrospection(): boolean {
+    return !!this.config.get<boolean>('ENABLE_INTROSPECTION');
+  }
+{{/if}}
+}

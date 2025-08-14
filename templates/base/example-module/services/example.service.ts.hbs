@@ -1,0 +1,89 @@
+import { Injectable } from '@nestjs/common';
+{{#if isMongoose}}
+import { ExampleRepository } from '../repositories/example.repository';
+import { ExampleDocument } from '../schemas/example.schema';
+import { ExampleCreateInput } from '../inputs/example-create.input';
+import { ExampleUpdateInput } from '../inputs/example-update.input';
+import { ExampleFindManyInput } from '../inputs/example-find-many.input';
+{{/if}}
+{{#if isPrisma}}
+import { PrismaService } from '../../prisma/prisma.service';
+import { Example } from '@prisma/client';
+{{/if}}
+
+@Injectable()
+export class ExampleService {
+{{#if isMongoose}}
+  constructor(private readonly exampleRepository: ExampleRepository) {}
+
+  async create(input: ExampleCreateInput): Promise<ExampleDocument> {
+    return this.exampleRepository.create(input);
+  }
+
+  async findMany(input?: ExampleFindManyInput): Promise<ExampleDocument[]> {
+    return this.exampleRepository.findMany(input);
+  }
+
+  async findById(id: string): Promise<ExampleDocument | null> {
+    return this.exampleRepository.findById(id);
+  }
+
+  async updateById(id: string, input: ExampleUpdateInput): Promise<ExampleDocument | null> {
+    return this.exampleRepository.updateById(id, input);
+  }
+
+  async deleteById(id: string): Promise<boolean> {
+    const result = await this.exampleRepository.deleteById(id);
+    return !!result;
+  }
+
+  async countMany(input?: ExampleFindManyInput): Promise<number> {
+    return this.exampleRepository.countMany(input);
+  }
+{{/if}}
+{{#if isPrisma}}
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(data: { name: string; description?: string }): Promise<Example> {
+    return this.prisma.example.create({
+      data,
+    });
+  }
+
+  async findMany(where?: { name?: string; isActive?: boolean }): Promise<Example[]> {
+    return this.prisma.example.findMany({
+      where,
+    });
+  }
+
+  async findById(id: string): Promise<Example | null> {
+    return this.prisma.example.findUnique({
+      where: { id },
+    });
+  }
+
+  async updateById(id: string, data: { name?: string; description?: string; isActive?: boolean }): Promise<Example | null> {
+    return this.prisma.example.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async deleteById(id: string): Promise<boolean> {
+    try {
+      await this.prisma.example.delete({
+        where: { id },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async countMany(where?: { name?: string; isActive?: boolean }): Promise<number> {
+    return this.prisma.example.count({
+      where,
+    });
+  }
+{{/if}}
+}

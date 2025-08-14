@@ -1,0 +1,126 @@
+# {{projectName}} - NestJS Project Rules
+
+## General Guidelines
+- Use TypeScript for all files
+- Follow NestJS best practices and conventions
+- Use dependency injection and decorators properly
+- Write clean, readable, and maintainable code
+
+## Naming Conventions
+### Module Files
+- `user.module.ts` - Module definition
+- `user.resolver.ts` - GraphQL resolver{{#unless isGraphQL}} (not applicable for this project){{/unless}}
+- `user.controller.ts` - REST controller{{#unless isRest}} (not applicable for this project){{/unless}}
+- `user.service.ts` - Business logic service
+- `user.repository.ts` - Data access layer{{#if isMongoose}} using Mongoose{{/if}}{{#if isPrisma}} using Prisma{{/if}}
+- `user.schema.ts` - Database schema{{#if isMongoose}} (Mongoose){{/if}}
+- `user.input.ts` - GraphQL input types{{#unless isGraphQL}} (not applicable for this project){{/unless}}
+- `user.object.ts` - GraphQL object types{{#unless isGraphQL}} (not applicable for this project){{/unless}}
+- `user.dto.ts` - Data transfer objects{{#unless isRest}} (not applicable for this project){{/unless}}
+
+### Query/Mutation Naming{{#if isGraphQL}}
+- `user` - get single user by fields
+- `users` - get multiple users with filters
+- `userCreate` - create a new user
+- `userUpdate` - update an existing user
+- `userDelete` - delete a user
+- `userDeleteMany` - delete multiple users{{/if}}
+
+## Project Structure
+```
+src/
+├── config/                 # Configuration modules with validation
+├── common/                # Shared modules and utilities
+│   └── modules/          # Common modules (DB, GraphQL, etc.)
+├── example-module/       # Example feature module
+│   ├── schemas/         # Database schemas
+│   ├── objects/         # GraphQL objects{{#unless isGraphQL}} (not applicable){{/unless}}
+│   ├── inputs/          # GraphQL inputs{{#unless isGraphQL}} (not applicable){{/unless}}
+│   ├── dto/             # REST DTOs{{#unless isRest}} (not applicable){{/unless}}
+│   ├── services/        # Business logic
+│   ├── repositories/    # Data access
+│   ├── resolvers/       # GraphQL resolvers{{#unless isGraphQL}} (not applicable){{/unless}}
+│   ├── controllers/     # REST controllers{{#unless isRest}} (not applicable){{/unless}}
+│   └── errors/          # Custom errors
+└── main.ts              # Application entry point
+```
+
+## Configuration
+- Use class-validator for environment variable validation
+- Keep sensitive data in environment variables
+- Use proper typing with ConfigService<EnvironmentVariables>
+
+{{#if isMongoose}}
+## Database (MongoDB with Mongoose)
+- Define schemas in `schemas/` directory
+- Use proper decorators (@Prop, @Schema)
+- Register all schemas in `app-mongoose-models.module.ts`
+- Use repositories for data access, never access models directly in services
+- Use `@InjectModel(Model.name)` for dependency injection
+
+### Repository Pattern
+```typescript
+constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) {}
+```
+{{/if}}
+
+{{#if isPrisma}}
+## Database ({{#if_eq database 'postgresql'}}PostgreSQL{{/if_eq}}{{#if_eq database 'mysql'}}MySQL{{/if_eq}} with Prisma)
+- Define schemas in `prisma/schema.prisma`
+- Use PrismaService for database operations
+- Run `npm run prisma:generate` after schema changes
+- Use transactions for complex operations
+{{/if}}
+
+{{#if isGraphQL}}
+## GraphQL Best Practices
+- Use GraphQL objects (`*.object.ts`) for return types
+- Use GraphQL inputs (`*.input.ts`) for arguments
+- Implement proper pagination using `PaginationInput`
+- Use GraphQL scalars from `graphql-scalars` package
+- Object constructors should handle both Document and Object types:
+
+```typescript
+constructor(input: UserDocument | UserObject) {
+  Object.assign(this, {
+    ...((input as any)._doc
+      ? (input as UserDocument).toObject({ virtuals: true })
+      : input),
+  });
+}
+```
+{{/if}}
+
+{{#if isRest}}
+## REST API Best Practices
+- Use DTOs for request/response validation
+- Apply Swagger decorators for API documentation
+- Use class-validator for input validation
+- Follow RESTful naming conventions
+- Use proper HTTP status codes
+{{/if}}
+
+## Error Handling
+- Create custom error classes extending base error types
+- Use proper error codes for frontend integration
+- Register error enums in `registerEnums.ts`
+
+{{#if hasRedis}}
+## Redis
+- Use RedisService for all cache operations
+- Implement proper error handling for cache failures
+- Set appropriate TTL values
+{{/if}}
+
+## Testing
+- Write unit tests for services and repositories
+- Write integration tests for resolvers/controllers
+- Mock external dependencies
+- Use test databases for integration tests
+
+## Code Quality
+- Use ESLint and Prettier for code formatting
+- Follow TypeScript strict mode
+- Use meaningful variable and function names
+- Write JSDoc comments for complex functions
+- Keep functions small and focused

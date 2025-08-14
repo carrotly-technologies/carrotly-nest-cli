@@ -1,0 +1,26 @@
+import { Module } from '@nestjs/common';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { ServerConfig } from '../../config/server.config';
+import { AppConfigModule } from '../../config/config.module';
+import * as path from 'path';
+
+@Module({
+  imports: [
+    AppConfigModule,
+    GraphQLModule.forRootAsync<ApolloDriverConfig>({
+      imports: [AppConfigModule],
+      driver: ApolloDriver,
+      inject: [ServerConfig],
+      useFactory: (serverConfig: ServerConfig) => ({
+        debug: serverConfig.isDebug(),
+        playground: serverConfig.isDevelopment() && serverConfig.getEnablePlayground(),
+        introspection: serverConfig.isDevelopment() && serverConfig.getEnableIntrospection(),
+        sortSchema: true,
+        autoSchemaFile: path.join(process.cwd(), 'schema.gql'),
+        context: ({ req }) => ({ req }),
+      }),
+    }),
+  ],
+})
+export class AppGqlModule {}

@@ -1,0 +1,18 @@
+import { Global, Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import {
+  Example,
+  ExampleSchema,
+} from '../../../example-module/schemas/example.schema';
+
+const models = [
+  { name: Example.name, schema: ExampleSchema },
+  // Add more schemas here as you create them
+];
+
+@Global()
+@Module({
+  imports: [MongooseModule.forFeature(models)],
+  exports: [MongooseModule.forFeature(models)],
+})
+export class AppMongooseModelsModule {}

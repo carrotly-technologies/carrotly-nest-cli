@@ -1,0 +1,47 @@
+import { Field, ObjectType } from '@nestjs/graphql';
+{{#if isMongoose}}
+import { ExampleDocument } from '../schemas/example.schema';
+import { GraphQLObjectID } from 'graphql-scalars';
+{{/if}}
+
+@ObjectType()
+export class ExampleObject {
+{{#if isMongoose}}
+  @Field(() => GraphQLObjectID)
+  id: string;
+{{/if}}
+{{#if isPrisma}}
+  @Field(() => String)
+  id: string;
+{{/if}}
+
+  @Field(() => String)
+  name: string;
+
+  @Field(() => String, { nullable: true })
+  description?: string;
+
+  @Field(() => Boolean)
+  isActive: boolean;
+
+  @Field(() => Date)
+  createdAt: Date;
+
+  @Field(() => Date)
+  updatedAt: Date;
+
+{{#if isMongoose}}
+  constructor(input: ExampleDocument | ExampleObject) {
+    Object.assign(this, {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      ...((input as any)._doc
+        ? (input as ExampleDocument).toObject({ virtuals: true })
+        : input),
+    });
+  }
+{{else}}
+  constructor(input: any) {
+    Object.assign(this, input);
+  }
+{{/if}}
+}

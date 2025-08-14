@@ -1,0 +1,27 @@
+import { Module } from '@nestjs/common';
+{{#if isGraphQL}}
+import { ExampleResolver } from './resolvers/example.resolver';
+{{/if}}
+{{#if isRest}}
+import { ExampleController } from './controllers/example.controller';
+{{/if}}
+import { ExampleService } from './services/example.service';
+{{#if isMongoose}}
+import { ExampleRepository } from './repositories/example.repository';
+{{/if}}
+
+@Module({
+{{#if isRest}}
+  controllers: [ExampleController],
+{{/if}}
+  providers: [
+{{#if isGraphQL}}
+    ExampleResolver,
+{{/if}}
+    ExampleService,
+{{#if isMongoose}}
+    ExampleRepository,
+{{/if}}
+  ],
+})
+export class ExampleModule {}

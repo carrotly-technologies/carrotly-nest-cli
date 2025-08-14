@@ -1,0 +1,22 @@
+import { Field, InputType } from '@nestjs/graphql';
+import { IsString, IsNotEmpty, IsOptional, MaxLength, IsBoolean } from 'class-validator';
+
+@InputType()
+export class ExampleCreateInput {
+  @Field(() => String)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+
+  @Field(() => Boolean, { nullable: true, defaultValue: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}

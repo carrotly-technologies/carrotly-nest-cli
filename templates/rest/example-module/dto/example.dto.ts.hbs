@@ -1,0 +1,76 @@
+import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsOptional, MaxLength, IsBoolean, Transform } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class CreateExampleDto {
+  @ApiProperty({
+    description: 'Name of the example',
+    example: 'Sample Example',
+    minLength: 1,
+    maxLength: 100,
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name: string;
+
+  @ApiProperty({
+    description: 'Description of the example',
+    example: 'This is a sample description',
+    required: false,
+    maxLength: 500,
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(500)
+  description?: string;
+
+  @ApiProperty({
+    description: 'Whether the example is active',
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class UpdateExampleDto extends PartialType(CreateExampleDto) {
+  @ApiProperty({
+    description: 'Name of the example',
+    example: 'Updated Sample Example',
+    required: false,
+    minLength: 1,
+    maxLength: 100,
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  name?: string;
+}
+
+export class FindExamplesDto {
+  @ApiProperty({
+    description: 'Filter by name (case-insensitive partial match)',
+    example: 'sample',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @ApiProperty({
+    description: 'Filter by active status',
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return value;
+  })
+  @Type(() => Boolean)
+  @IsBoolean()
+  isActive?: boolean;
+}

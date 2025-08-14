@@ -98,6 +98,9 @@ export class TemplateEngine {
 
     // Base NestJS templates - always included
     sets.push(this.getBaseTemplateSet());
+    sets.push(this.getConfigTemplateSet());
+    sets.push(this.getCommonTemplateSet());
+    sets.push(this.getExampleModuleTemplateSet());
 
     // API-specific templates
     if (context.isGraphQL) {
@@ -116,6 +119,11 @@ export class TemplateEngine {
     // Service-specific templates
     if (context.hasRedis) {
       sets.push(this.getRedisTemplateSet());
+    }
+
+    // IDE-specific templates
+    if (context.codeAssistant === 'cursor') {
+      sets.push(this.getCursorTemplateSet());
     }
 
     return sets;
@@ -268,6 +276,164 @@ export class TemplateEngine {
         {
           templatePath: 'services/redis.service.ts.hbs',
           outputPath: 'src/redis/redis.service.ts',
+        },
+      ],
+    };
+  }
+
+  /**
+   * Configuration template set
+   */
+  private getConfigTemplateSet(): TemplateSet {
+    return {
+      name: 'config',
+      description: 'Configuration modules with validation',
+      files: [
+        {
+          templatePath: 'base/config/env.variables.ts.hbs',
+          outputPath: 'src/config/env.variables.ts',
+        },
+        {
+          templatePath: 'base/config/server.config.ts.hbs',
+          outputPath: 'src/config/server.config.ts',
+        },
+        {
+          templatePath: 'base/config/config.module.ts.hbs',
+          outputPath: 'src/config/config.module.ts',
+        },
+        {
+          templatePath: 'mongoose/database.config.ts.hbs',
+          outputPath: 'src/database/database.config.ts',
+          condition: (context) => context.isMongoose,
+        },
+      ],
+    };
+  }
+
+  /**
+   * Common modules template set
+   */
+  private getCommonTemplateSet(): TemplateSet {
+    return {
+      name: 'common',
+      description: 'Common modules and utilities',
+      files: [
+        {
+          templatePath: 'base/common/modules/app-db.module.ts.hbs',
+          outputPath: 'src/common/modules/app-db.module.ts',
+        },
+        {
+          templatePath: 'base/common/modules/app-gql.module.ts.hbs',
+          outputPath: 'src/common/modules/app-gql.module.ts',
+          condition: (context) => context.isGraphQL,
+        },
+        {
+          templatePath:
+            'mongoose/common/modules/app-mongoose-models.module.ts.hbs',
+          outputPath: 'src/common/modules/app-mongoose-models.module.ts',
+          condition: (context) => context.isMongoose,
+        },
+      ],
+    };
+  }
+
+  /**
+   * Example module template set
+   */
+  private getExampleModuleTemplateSet(): TemplateSet {
+    const files: TemplateFile[] = [
+      // Base files (always included)
+      {
+        templatePath: 'base/example-module/example.module.ts.hbs',
+        outputPath: 'src/example-module/example.module.ts',
+      },
+      {
+        templatePath: 'base/example-module/services/example.service.ts.hbs',
+        outputPath: 'src/example-module/services/example.service.ts',
+      },
+    ];
+
+    // Mongoose-specific files
+    files.push(
+      {
+        templatePath: 'base/example-module/schemas/example.schema.ts.hbs',
+        outputPath: 'src/example-module/schemas/example.schema.ts',
+        condition: (context) => context.isMongoose,
+      },
+      {
+        templatePath:
+          'base/example-module/repositories/example.repository.ts.hbs',
+        outputPath: 'src/example-module/repositories/example.repository.ts',
+        condition: (context) => context.isMongoose,
+      },
+    );
+
+    // GraphQL-specific files
+    files.push(
+      {
+        templatePath: 'graphql/example-module/objects/example.object.ts.hbs',
+        outputPath: 'src/example-module/objects/example.object.ts',
+        condition: (context) => context.isGraphQL,
+      },
+      {
+        templatePath:
+          'graphql/example-module/inputs/example-create.input.ts.hbs',
+        outputPath: 'src/example-module/inputs/example-create.input.ts',
+        condition: (context) => context.isGraphQL,
+      },
+      {
+        templatePath:
+          'graphql/example-module/inputs/example-update.input.ts.hbs',
+        outputPath: 'src/example-module/inputs/example-update.input.ts',
+        condition: (context) => context.isGraphQL,
+      },
+      {
+        templatePath:
+          'graphql/example-module/inputs/example-find-many.input.ts.hbs',
+        outputPath: 'src/example-module/inputs/example-find-many.input.ts',
+        condition: (context) => context.isGraphQL,
+      },
+      {
+        templatePath:
+          'graphql/example-module/resolvers/example.resolver.ts.hbs',
+        outputPath: 'src/example-module/resolvers/example.resolver.ts',
+        condition: (context) => context.isGraphQL,
+      },
+    );
+
+    // REST-specific files
+    files.push(
+      {
+        templatePath:
+          'rest/example-module/controllers/example.controller.ts.hbs',
+        outputPath: 'src/example-module/controllers/example.controller.ts',
+        condition: (context) => context.isRest,
+      },
+      {
+        templatePath: 'rest/example-module/dto/example.dto.ts.hbs',
+        outputPath: 'src/example-module/dto/example.dto.ts',
+        condition: (context) => context.isRest,
+      },
+    );
+
+    return {
+      name: 'example-module',
+      description: 'Complete example module with all layers',
+      files,
+    };
+  }
+
+  /**
+   * Cursor IDE template set
+   */
+  private getCursorTemplateSet(): TemplateSet {
+    return {
+      name: 'cursor',
+      description: 'Cursor IDE configuration',
+      files: [
+        {
+          templatePath: 'cursor/.cursor/rules',
+          outputPath: '.cursor/rules',
         },
       ],
     };

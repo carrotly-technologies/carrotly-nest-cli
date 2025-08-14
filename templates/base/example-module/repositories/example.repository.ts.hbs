@@ -1,0 +1,106 @@
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Example, ExampleDocument } from '../schemas/example.schema';
+{{#if isGraphQL}}
+import { ExampleCreateInput } from '../inputs/example-create.input';
+import { ExampleUpdateInput } from '../inputs/example-update.input';
+import { ExampleFindManyInput } from '../inputs/example-find-many.input';
+{{/if}}
+
+@Injectable()
+export class ExampleRepository {
+  constructor(@InjectModel(Example.name) private readonly exampleModel: Model<ExampleDocument>) {}
+
+{{#if isGraphQL}}
+  async create(input: ExampleCreateInput): Promise<ExampleDocument> {
+    const example = new this.exampleModel(input);
+    return example.save();
+  }
+
+  async findMany(input?: ExampleFindManyInput): Promise<ExampleDocument[]> {
+    const query = this.buildFindQuery(input);
+    return this.exampleModel.find(query).exec();
+  }
+
+  async findById(id: string): Promise<ExampleDocument | null> {
+    return this.exampleModel.findById(id).exec();
+  }
+
+  async updateById(id: string, input: ExampleUpdateInput): Promise<ExampleDocument | null> {
+    return this.exampleModel.findByIdAndUpdate(id, input, { new: true }).exec();
+  }
+
+  async deleteById(id: string): Promise<ExampleDocument | null> {
+    return this.exampleModel.findByIdAndDelete(id).exec();
+  }
+
+  async countMany(input?: ExampleFindManyInput): Promise<number> {
+    const query = this.buildFindQuery(input);
+    return this.exampleModel.countDocuments(query).exec();
+  }
+
+  private buildFindQuery(input?: ExampleFindManyInput): Record<string, any> {
+    const query: Record<string, any> = {};
+
+    if (!input) {
+      return query;
+    }
+
+    if (input.name) {
+      query.name = { $regex: input.name, $options: 'i' };
+    }
+
+    if (input.isActive !== undefined) {
+      query.isActive = input.isActive;
+    }
+
+    return query;
+  }
+{{else}}
+  async create(data: { name: string; description?: string; isActive?: boolean }): Promise<ExampleDocument> {
+    const example = new this.exampleModel(data);
+    return example.save();
+  }
+
+  async findMany(filter?: { name?: string; isActive?: boolean }): Promise<ExampleDocument[]> {
+    const query = this.buildFindQuery(filter);
+    return this.exampleModel.find(query).exec();
+  }
+
+  async findById(id: string): Promise<ExampleDocument | null> {
+    return this.exampleModel.findById(id).exec();
+  }
+
+  async updateById(id: string, data: { name?: string; description?: string; isActive?: boolean }): Promise<ExampleDocument | null> {
+    return this.exampleModel.findByIdAndUpdate(id, data, { new: true }).exec();
+  }
+
+  async deleteById(id: string): Promise<ExampleDocument | null> {
+    return this.exampleModel.findByIdAndDelete(id).exec();
+  }
+
+  async countMany(filter?: { name?: string; isActive?: boolean }): Promise<number> {
+    const query = this.buildFindQuery(filter);
+    return this.exampleModel.countDocuments(query).exec();
+  }
+
+  private buildFindQuery(filter?: { name?: string; isActive?: boolean }): Record<string, any> {
+    const query: Record<string, any> = {};
+
+    if (!filter) {
+      return query;
+    }
+
+    if (filter.name) {
+      query.name = { $regex: filter.name, $options: 'i' };
+    }
+
+    if (filter.isActive !== undefined) {
+      query.isActive = filter.isActive;
+    }
+
+    return query;
+  }
+{{/if}}
+}

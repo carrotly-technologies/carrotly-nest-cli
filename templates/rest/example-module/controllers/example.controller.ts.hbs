@@ -1,0 +1,66 @@
+import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ExampleService } from '../services/example.service';
+import { CreateExampleDto, UpdateExampleDto, FindExamplesDto } from '../dto/example.dto';
+
+@ApiTags('examples')
+@Controller('examples')
+export class ExampleController {
+  constructor(private readonly exampleService: ExampleService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Create a new example' })
+  @ApiResponse({ status: 201, description: 'Example created successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  async create(@Body() createExampleDto: CreateExampleDto) {
+    return this.exampleService.create(createExampleDto);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all examples' })
+  @ApiResponse({ status: 200, description: 'Examples retrieved successfully' })
+  @ApiQuery({ name: 'name', required: false, description: 'Filter by name' })
+  @ApiQuery({ name: 'isActive', required: false, description: 'Filter by active status' })
+  async findAll(@Query() findExamplesDto: FindExamplesDto) {
+    return this.exampleService.findMany(findExamplesDto);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get example by ID' })
+  @ApiResponse({ status: 200, description: 'Example retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Example not found' })
+  @ApiParam({ name: 'id', description: 'Example ID' })
+  async findOne(@Param('id') id: string) {
+    const example = await this.exampleService.findById(id);
+    if (!example) {
+      throw new Error('Example not found');
+    }
+    return example;
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update example by ID' })
+  @ApiResponse({ status: 200, description: 'Example updated successfully' })
+  @ApiResponse({ status: 404, description: 'Example not found' })
+  @ApiParam({ name: 'id', description: 'Example ID' })
+  async update(@Param('id') id: string, @Body() updateExampleDto: UpdateExampleDto) {
+    const example = await this.exampleService.updateById(id, updateExampleDto);
+    if (!example) {
+      throw new Error('Example not found');
+    }
+    return example;
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete example by ID' })
+  @ApiResponse({ status: 200, description: 'Example deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Example not found' })
+  @ApiParam({ name: 'id', description: 'Example ID' })
+  async remove(@Param('id') id: string) {
+    const success = await this.exampleService.deleteById(id);
+    if (!success) {
+      throw new Error('Example not found');
+    }
+    return { message: 'Example deleted successfully' };
+  }
+}
