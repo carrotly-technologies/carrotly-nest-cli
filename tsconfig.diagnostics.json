@@ -5,6 +5,7 @@
     "pretty": true,
     "diagnostics": true,
     "incremental": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "rootDir": "."
   }
 }

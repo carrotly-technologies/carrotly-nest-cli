@@ -1,5 +1,11 @@
 # Carrotly CLI 🥕
 
+[![CI](https://github.com/carrotly-technologies/carrotly-nest-cli/workflows/CI/badge.svg)](https://github.com/carrotly-technologies/carrotly-nest-cli/actions/workflows/ci.yml)
+[![npm version](https://badge.fury.io/js/carrotly-cli.svg)](https://badge.fury.io/js/carrotly-cli)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
+[![codecov](https://codecov.io/gh/carrotly-technologies/carrotly-nest-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/carrotly-technologies/carrotly-nest-cli)
+
 A modern CLI tool for scaffolding NestJS applications with comprehensive configuration support.
 
 ## Features
@@ -132,8 +138,8 @@ my-nestjs-app/
 
 ```bash
 # Clone the repository
-git clone https://github.com/filipkostecki/carrotly-cli.git
-cd carrotly-cli
+git clone https://github.com/carrotly-technologies/carrotly-nest-cli.git
+cd carrotly-nest-cli
 
 # Install dependencies
 yarn install

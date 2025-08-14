@@ -86,9 +86,23 @@ module.exports = [
       'dist/**/**',
       'fakers/**',
       'pypi-package/**',
+      // Template files contain Handlebars syntax that conflicts with TypeScript parsing
+      'templates/**',
+      '**/*.hbs',
+      // Build outputs and dependencies
+      'node_modules/**',
+      // Test outputs
+      'coverage/**',
     ],
   },
   {
-    files: ['src/**/*.ts', 'test/**/*.ts'],
+    files: ['src/**/*.ts'],
+  },
+  {
+    files: ['test/**/*.ts'],
+    rules: {
+      // Allow test files to import from src
+      'no-restricted-imports': 'off',
+    },
   },
 ];
