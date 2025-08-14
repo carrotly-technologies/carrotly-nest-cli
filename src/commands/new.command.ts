@@ -15,8 +15,8 @@ export class NewCommand {
       .description('create a new NestJS application')
       .argument('[name]', 'project name')
       .option('-d, --description <description>', 'project description')
-      .option('-a, --api <api>', 'API type (rest|graphql)', 'graphql')
-      .option('-o, --orm <orm>', 'ORM type (mongoose|prisma)', 'mongoose')
+      .option('-a, --api <api>', 'API type (rest|graphql)')
+      .option('-o, --orm <orm>', 'ORM type (mongoose|prisma)')
       .option(
         '-db, --database <database>',
         'database type (mongodb|postgresql|mysql)',
@@ -28,7 +28,6 @@ export class NewCommand {
       .option(
         '-ca, --code-assistant <assistant>',
         'code assistant (cursor|copilot|none)',
-        'cursor',
       )
       .option('-dir, --directory <directory>', 'target directory')
       .option('--skip-prompts', 'skip interactive prompts')
