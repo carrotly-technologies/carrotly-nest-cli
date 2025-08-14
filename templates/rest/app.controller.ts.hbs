@@ -1,0 +1,67 @@
+import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AppService } from './app.service';
+import { CreateAppDto, UpdateAppDto } from './dto/app.dto';
+
+@ApiTags('{{projectName}}')
+@Controller()
+export class AppController {
+  constructor(private readonly appService: AppService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Get application info' })
+  @ApiResponse({ status: 200, description: 'Application info retrieved successfully' })
+  getInfo() {
+    return this.appService.getInfo();
+  }
+
+  @Get('health')
+  @ApiOperation({ summary: 'Health check endpoint' })
+  @ApiResponse({ status: 200, description: 'Service is healthy' })
+  getHealth() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      service: '{{projectName}}',
+    };
+  }
+
+  @Post('items')
+  @ApiOperation({ summary: 'Create a new item' })
+  @ApiResponse({ status: 201, description: 'Item created successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  createItem(@Body() createItemDto: CreateAppDto) {
+    return this.appService.createItem(createItemDto);
+  }
+
+  @Get('items')
+  @ApiOperation({ summary: 'Get all items' })
+  @ApiResponse({ status: 200, description: 'Items retrieved successfully' })
+  getAllItems() {
+    return this.appService.getAllItems();
+  }
+
+  @Get('items/:id')
+  @ApiOperation({ summary: 'Get item by ID' })
+  @ApiResponse({ status: 200, description: 'Item retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Item not found' })
+  getItemById(@Param('id') id: string) {
+    return this.appService.getItemById(id);
+  }
+
+  @Put('items/:id')
+  @ApiOperation({ summary: 'Update item by ID' })
+  @ApiResponse({ status: 200, description: 'Item updated successfully' })
+  @ApiResponse({ status: 404, description: 'Item not found' })
+  updateItem(@Param('id') id: string, @Body() updateItemDto: UpdateAppDto) {
+    return this.appService.updateItem(id, updateItemDto);
+  }
+
+  @Delete('items/:id')
+  @ApiOperation({ summary: 'Delete item by ID' })
+  @ApiResponse({ status: 200, description: 'Item deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Item not found' })
+  deleteItem(@Param('id') id: string) {
+    return this.appService.deleteItem(id);
+  }
+}

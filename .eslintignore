@@ -1,0 +1,10 @@
+# Ignore template files - they contain Handlebars syntax that conflicts with TypeScript parsing
+templates/
+*.hbs
+
+# Build outputs
+dist/
+node_modules/
+
+# Test outputs
+coverage/

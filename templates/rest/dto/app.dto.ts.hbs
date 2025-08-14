@@ -1,0 +1,42 @@
+import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, MinLength, MaxLength, IsOptional } from 'class-validator';
+
+export class CreateAppDto {
+  @ApiProperty({
+    description: 'Name of the item',
+    example: 'Sample Item',
+    minLength: 1,
+    maxLength: 100,
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(1)
+  @MaxLength(100)
+  name: string;
+
+  @ApiProperty({
+    description: 'Description of the item',
+    example: 'This is a sample description',
+    required: false,
+    maxLength: 500,
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(500)
+  description?: string;
+}
+
+export class UpdateAppDto extends PartialType(CreateAppDto) {
+  @ApiProperty({
+    description: 'Name of the item',
+    example: 'Updated Sample Item',
+    required: false,
+    minLength: 1,
+    maxLength: 100,
+  })
+  @IsString()
+  @IsOptional()
+  @MinLength(1)
+  @MaxLength(100)
+  name?: string;
+}

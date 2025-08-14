@@ -1,0 +1,44 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';{{#if isRest}}
+import { AppController } from './app.controller';
+import { AppService } from './app.service';{{/if}}{{#if isGraphQL}}
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { AppResolver } from './app.resolver';{{/if}}{{#if isMongoose}}
+import { MongooseModule } from '@nestjs/mongoose';
+import { DatabaseModule } from './database/database.module';{{/if}}{{#if isPrisma}}
+import { PrismaModule } from './prisma/prisma.module';{{/if}}{{#if hasRedis}}
+import { RedisModule } from './redis/redis.module';{{/if}}
+
+@Module({
+  imports: [
+    // Configuration module
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),{{#if isGraphQL}}
+    
+    // GraphQL configuration
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: true,
+      sortSchema: true,
+      playground: process.env.NODE_ENV !== 'production',
+      introspection: process.env.NODE_ENV !== 'production',
+    }),{{/if}}{{#if isMongoose}}
+    
+    // MongoDB connection
+    MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://localhost:27017/{{projectName}}'),
+    DatabaseModule,{{/if}}{{#if isPrisma}}
+    
+    // Prisma ORM
+    PrismaModule,{{/if}}{{#if hasRedis}}
+    
+    // Redis configuration
+    RedisModule,{{/if}}
+  ],{{#if isRest}}
+  controllers: [AppController],
+  providers: [AppService],{{/if}}{{#if isGraphQL}}
+  providers: [AppResolver],{{/if}}
+})
+export class AppModule {}

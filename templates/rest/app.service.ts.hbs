@@ -1,0 +1,83 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CreateAppDto, UpdateAppDto } from './dto/app.dto';
+
+interface AppItem {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+@Injectable()
+export class AppService {
+  private items: AppItem[] = [
+    {
+      id: '1',
+      name: 'Sample Item',
+      description: 'This is a sample item created by the {{projectName}} service',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
+  getInfo(): any {
+    return {
+      name: '{{projectName}}',
+      description: '{{projectDescription}}',
+      version: '1.0.0',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  createItem(createItemDto: CreateAppDto): AppItem {
+    const newItem: AppItem = {
+      id: Date.now().toString(),
+      name: createItemDto.name,
+      description: createItemDto.description,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    this.items.push(newItem);
+    return newItem;
+  }
+
+  getAllItems(): AppItem[] {
+    return this.items;
+  }
+
+  getItemById(id: string): AppItem {
+    const item = this.items.find((item) => item.id === id);
+    if (!item) {
+      throw new NotFoundException(`Item with ID ${id} not found`);
+    }
+    return item;
+  }
+
+  updateItem(id: string, updateItemDto: UpdateAppDto): AppItem {
+    const itemIndex = this.items.findIndex((item) => item.id === id);
+    if (itemIndex === -1) {
+      throw new NotFoundException(`Item with ID ${id} not found`);
+    }
+
+    const updatedItem = {
+      ...this.items[itemIndex],
+      ...updateItemDto,
+      updatedAt: new Date(),
+    };
+
+    this.items[itemIndex] = updatedItem;
+    return updatedItem;
+  }
+
+  deleteItem(id: string): { message: string } {
+    const itemIndex = this.items.findIndex((item) => item.id === id);
+    if (itemIndex === -1) {
+      throw new NotFoundException(`Item with ID ${id} not found`);
+    }
+
+    this.items.splice(itemIndex, 1);
+    return { message: `Item with ID ${id} has been deleted` };
+  }
+}

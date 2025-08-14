@@ -1,0 +1,32 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+{{#if_eq database 'postgresql'}}
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+{{/if_eq}}
+{{#if_eq database 'mysql'}}
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+{{/if_eq}}
+{{#unless database}}
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+{{/unless}}
+}
+
+model Example {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("examples")
+}
