@@ -1,0 +1,141 @@
+name: Dependency Update
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Update dependencies
+        run: |
+          # Update dependencies
+          yarn upgrade --latest
+          
+          # Update dev dependencies  
+          yarn upgrade --latest --dev
+
+      - name: Run tests
+        run: |
+          yarn test
+          yarn lint
+          yarn build
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --exit-code --quiet yarn.lock package.json; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update dependencies'
+          title: 'chore: automated dependency update'
+          body: |
+            ## Automated Dependency Update
+            
+            This PR updates project dependencies to their latest compatible versions.
+            
+            ### Changes
+            - Updated dependencies in package.json and yarn.lock
+            - All tests pass ✅
+            - Build succeeds ✅
+            - Linting passes ✅
+            
+            Please review the changes and merge if everything looks good.
+            
+            ---
+            *This PR was created automatically by the dependency update workflow.*
+          branch: chore/dependency-update
+          delete-branch: true
+          labels: |
+            dependencies
+            automated
+
+  audit-dependencies:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run security audit
+        run: |
+          echo "## Security Audit Report" > audit-report.md
+          echo "" >> audit-report.md
+          
+          # Run yarn audit and capture output
+          if yarn audit --json > audit-output.json 2>&1; then
+            echo "✅ No security vulnerabilities found" >> audit-report.md
+          else
+            echo "⚠️ Security vulnerabilities detected:" >> audit-report.md
+            echo "" >> audit-report.md
+            echo '```' >> audit-report.md
+            cat audit-output.json >> audit-report.md
+            echo '```' >> audit-report.md
+          fi
+
+      - name: Create Issue for Security Vulnerabilities
+        if: failure()
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'security: fix vulnerabilities'
+          title: 'security: fix detected vulnerabilities'
+          body: |
+            ## Security Vulnerabilities Detected
+            
+            The automated security audit has detected vulnerabilities in the project dependencies.
+            
+            ### Audit Report
+            $(cat audit-report.md)
+            
+            ### Recommended Actions
+            1. Review the vulnerabilities listed above
+            2. Update affected packages to secure versions
+            3. Run `yarn audit fix` to automatically fix issues where possible
+            4. Manually update packages that require breaking changes
+            
+            ---
+            *This PR was created automatically by the security audit workflow.*
+          branch: security/fix-vulnerabilities
+          delete-branch: true
+          labels: |
+            security
+            automated
+            high-priority
