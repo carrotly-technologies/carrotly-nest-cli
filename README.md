@@ -88,6 +88,27 @@ carrotly new analytics-api --services redis,elasticsearch,rabbitmq
 carrotly new quick-app --skip-prompts
 ```
 
+### Project Information
+
+```bash
+# Show current project configuration
+carrotly info
+
+# Show configuration for a specific project
+carrotly info --path ./my-project
+```
+
+## Configuration File
+
+Each generated project includes a `.carrotly.json` configuration file that stores:
+
+- **Project Settings** - Name, description, and directory
+- **Technology Stack** - API type, ORM, database, and services
+- **Generated Files** - Tracking of all CLI-generated files and modules
+- **Version Info** - CLI version and creation timestamps
+
+This enables future CLI commands to understand your project's configuration and generate components that match your technology stack.
+
 ## Generated Project Structure
 
 ```
@@ -98,6 +119,7 @@ my-nestjs-app/
 │   └── main.ts
 ├── docker-compose.yml      # With selected services
 ├── Dockerfile              # Hot-reload enabled
+├── .carrotly.json          # Project configuration
 ├── package.json
 ├── tsconfig.json
 ├── eslint.config.cjs
