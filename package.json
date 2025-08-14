@@ -14,7 +14,8 @@
   ],
   "main": "dist/index.js",
   "bin": {
-    "carrotly": "dist/bin/carrotly.js"
+    "carrotly": "dist/bin/carrotly.js",
+    "carrotly-cli": "dist/bin/carrotly.js"
   },
   "scripts": {
     "build": "tsc",

@@ -1,6 +1,6 @@
 import inquirer from 'inquirer';
-const chalk = require('chalk');
-const validateNpmPackageName = require('validate-npm-package-name');
+import chalk from 'chalk';
+import validateNpmPackageName from 'validate-npm-package-name';
 import {
   ProjectConfig,
   CommandOptions,
@@ -19,7 +19,7 @@ export class ProjectWizard {
     console.log(chalk.cyan('🔧 Project Configuration Wizard'));
     console.log(
       chalk.gray(
-        'Answer the following questions to set up your NestJS project:\\n',
+        'Answer the following questions to set up your NestJS project:\n',
       ),
     );
 

@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
-const chalk = require('chalk');
-const ora = require('ora');
+import chalk from 'chalk';
+import ora from 'ora';
 import { ProjectConfig, TemplateContext } from '../types/project-config.types';
 
 export class ProjectGenerator {
@@ -94,7 +94,7 @@ yarn start:dev
 
     await fs.writeFile(path.join(targetPath, 'README.md'), readmeContent);
 
-    console.log(chalk.yellow('\\n⚠️  Template generation not yet implemented'));
+    console.log(chalk.yellow('\n⚠️  Template generation not yet implemented'));
     console.log(chalk.gray('   This is a placeholder implementation.'));
     console.log(
       chalk.gray('   Full template system will be added in the next task.'),

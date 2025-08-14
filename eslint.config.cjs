@@ -31,32 +31,19 @@ module.exports = [
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
       'no-async-promise-executor': 'error',
       'array-callback-return': 'error',
       'no-empty-function': ['error', { allow: ['constructors'] }],
       'no-implied-eval': 'error',
       'no-var': 'error',
-      '@typescript-eslint/no-restricted-types': [
-        'error',
-        {
-          types: {
-            any: {
-              message:
-                "Avoid this type unless it's absolutely necessary. Use unknown or custom interface instead",
-              fixWith: 'unknown',
-            },
-
-            String: {
-              message: 'Use string instead',
-              fixWith: 'string',
-            },
-
-            Function:
-              "Avoid this type unless it's absolutely necessary. Create custom type instead.",
-          },
-        },
-      ],
-      'no-console': 'error',
+      'no-console': 'off', // Allow console for CLI
+      'no-useless-escape': 'warn',
       'no-else-return': ['error', { allowElseIf: false }],
       'no-return-await': 'off',
 

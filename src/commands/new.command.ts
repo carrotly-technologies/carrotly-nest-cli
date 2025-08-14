@@ -1,11 +1,9 @@
 import { Command } from 'commander';
-const chalk = require('chalk');
-import inquirer from 'inquirer';
-const validateNpmPackageName = require('validate-npm-package-name');
+import chalk from 'chalk';
+import validateNpmPackageName from 'validate-npm-package-name';
 import { ProjectWizard } from '../utils/project-wizard';
 import { ProjectGenerator } from '../utils/project-generator';
 import { CommandOptions, ProjectConfig } from '../types/project-config.types';
-
 export class NewCommand {
   private wizard = new ProjectWizard();
   private generator = new ProjectGenerator();
@@ -48,7 +46,7 @@ export class NewCommand {
 
   private async execute(name: string, options: CommandOptions): Promise<void> {
     console.log(chalk.cyan('🥕 Welcome to Carrotly CLI!'));
-    console.log(chalk.gray('Creating a new NestJS application...\\n'));
+    console.log(chalk.gray('Creating a new NestJS application...\n'));
 
     // Get project configuration
     const config = await this.getProjectConfig(name, options);
@@ -57,12 +55,12 @@ export class NewCommand {
     this.validateProjectName(config.name);
 
     // Generate project
-    console.log(chalk.cyan(`\\n📦 Generating project \"${config.name}\"...`));
+    console.log(chalk.cyan(`\n📦 Generating project "${config.name}"...`));
     await this.generator.generate(config);
 
-    console.log(chalk.green('\\n✅ Project created successfully!'));
-    console.log(chalk.gray(`\\n📁 Project location: ${config.directory}`));
-    console.log(chalk.gray('\\n🚀 Next steps:'));
+    console.log(chalk.green('\n✅ Project created successfully!'));
+    console.log(chalk.gray(`\n📁 Project location: ${config.directory}`));
+    console.log(chalk.gray('\n🚀 Next steps:'));
     console.log(chalk.gray(`   cd ${config.name}`));
     console.log(chalk.gray('   yarn install'));
     console.log(chalk.gray('   docker-compose up -d'));

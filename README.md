@@ -19,8 +19,13 @@ A modern CLI tool for scaffolding NestJS applications with comprehensive configu
 # Install globally
 npm install -g carrotly-cli
 
-# Or use with npx
+# Or use with npx (recommended)
 npx carrotly-cli new my-project
+
+# You can also use yarn
+yarn global add carrotly-cli
+# Or with yarn dlx
+yarn dlx carrotly-cli new my-project
 ```
 
 ## Quick Start

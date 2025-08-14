@@ -1,10 +1,15 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-const chalk = require('chalk');
-const packageJson = require('../../package.json');
-const version = packageJson.version;
+import chalk from 'chalk';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { NewCommand } from '../commands/new.command';
+
+// Read package.json to get version
+const packageJsonPath = join(__dirname, '../../package.json');
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+const version = packageJson.version;
 
 const program = new Command();
 
